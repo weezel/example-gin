@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  my-app:
+    image: "postgres:14.4"
+    restart: on-failure:3
+    environment:
+      - "POSTGRES_PASSWORD=${DB_PASSWORD}"
+    ports:
+      - "127.0.0.1:${DB_PORT}:5432"
+    command: "-c log_statement=all"
+    # Uncomment the following lines to retain the data
+    #volumes:
+    #  - "$PWD/postgres-data:/var/lib/postgresql/data:rw"
+

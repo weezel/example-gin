@@ -1,0 +1,29 @@
+{
+	"editor.formatOnSave": true,
+	"editor.insertSpaces": false,
+	"editor.renderWhitespace": "trailing",
+	"editor.rulers": [
+		120
+	],
+	"files.trimTrailingWhitespace": true,
+	"[go]": {
+		"editor.formatOnSave": true
+	},
+	"go.delveConfig": {
+		"showGlobalVariables": true,
+	},
+	"go.formatTool": "gofumpt",
+	"go.lintOnSave": "workspace",
+	"go.lintTool": "golangci-lint",
+	"go.lintFlags": [
+		"--fast",
+		"--fix"
+	],
+	"go.testFlags": [
+		"-v"
+	],
+	"gopls": {
+		"gofumpt": true,
+	},
+	"todo-tree.tree.scanMode": "workspace only",
+}
