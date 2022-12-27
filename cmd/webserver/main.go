@@ -31,12 +31,14 @@ func main() {
 
 	var dbConn *pgxpool.Pool
 
+	// This must be before httpserver.New() since that sets the database pointer to
+	// Gin context.
+	dbConn, err = db.New(ctx, cfg)
 	r := httpserver.New()
 	routes.AddRoutes(r)
 	srv := httpserver.Config(r)
 	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below
 	go func() {
-		dbConn, err = db.New(ctx, cfg)
 		if err = srv.ListenAndServe(); err != nil &&
 			errors.Is(err, http.ErrServerClosed) {
 			l.Logger.Error().Err(err).Msg("HTTP server closed")

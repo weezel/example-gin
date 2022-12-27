@@ -19,6 +19,7 @@ func New() *gin.Engine {
 	r := gin.New()
 	// Use our own logging middleware
 	r.Use(ginmiddleware.DefaultStructuredLogger())
+	r.Use(ginmiddleware.Postgres())
 	r.Use(gin.Recovery())
 
 	return r

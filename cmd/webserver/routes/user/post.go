@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"weezel/example-gin/pkg/db"
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // PostHandler adds an user into a database
@@ -32,7 +32,14 @@ func PostHandler(c *gin.Context) {
 		return
 	}
 
-	q := sqlc.New(db.GetPool())
+	p, ok := c.Keys["db"].(*pgxpool.Pool)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to connect database",
+		})
+		return
+	}
+	q := sqlc.New(p)
 	if _, err = q.AddUser(ctx, sqlc.AddUserParams{
 		Name: usr.Name,
 		Age:  usr.Age,

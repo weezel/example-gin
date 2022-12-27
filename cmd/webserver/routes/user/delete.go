@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"weezel/example-gin/pkg/db"
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 func DeleteHandler(c *gin.Context) {
@@ -31,7 +31,14 @@ func DeleteHandler(c *gin.Context) {
 		return
 	}
 
-	q := sqlc.New(db.GetPool())
+	p, ok := c.Keys["db"].(*pgxpool.Pool)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to connect database",
+		})
+		return
+	}
+	q := sqlc.New(p)
 	if _, err = q.DeleteUser(ctx, sqlc.DeleteUserParams{
 		ID:   usr.ID,
 		Name: usr.Name,
