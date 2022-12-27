@@ -64,6 +64,24 @@ func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) (*Homepa
 	return &i, err
 }
 
+const getUser = `-- name: GetUser :one
+SELECT id, name, age, city, phone FROM homepage_schema.user
+        WHERE name = $1
+`
+
+func (q *Queries) GetUser(ctx context.Context, name string) (*HomepageSchemaUser, error) {
+	row := q.db.QueryRow(ctx, getUser, name)
+	var i HomepageSchemaUser
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Age,
+		&i.City,
+		&i.Phone,
+	)
+	return &i, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT id, name, age, city, phone FROM homepage_schema.user
 `

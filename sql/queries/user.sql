@@ -1,6 +1,10 @@
 -- name: ListUsers :many
 SELECT * FROM homepage_schema.user;
 
+-- name: GetUser :one
+SELECT * FROM homepage_schema.user
+        WHERE name = $1;
+
 -- name: AddUser :one
 INSERT INTO homepage_schema.user(
         name,
