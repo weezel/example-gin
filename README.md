@@ -39,6 +39,7 @@ Example logging with Zerolog middleware hooked to Gin Gonic:
   * Useful with Lambdas or with AWS Fargate where signal handling speeds up
     the shutdown.
 * Database retry with exponential backoff and connection pooling.
+* Gin middlewares for logging and database
 
 ## Usage
 
