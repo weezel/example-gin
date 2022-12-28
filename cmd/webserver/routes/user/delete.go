@@ -1,4 +1,5 @@
-package user
+package user // nolint: dupl
+// This is intentionally equal to deleting user.
 
 import (
 	"context"
@@ -23,16 +24,21 @@ func DeleteHandler(c *gin.Context) {
 		})
 		return
 	}
+	l.Logger.Info().
+		Int32("user_id", usr.ID).
+		Str("user_name", usr.Name).
+		Msg("Deleting user")
 
 	if usr.Name == "" || !isValidName(usr.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Parameter name empty or invalid",
+			"error": "Name parameter empty or invalid",
 		})
 		return
 	}
 
 	p, ok := c.Keys["db"].(*pgxpool.Pool)
 	if !ok {
+		l.Logger.Error().Msg("No database stored in Gin context")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to connect database",
 		})
@@ -43,13 +49,17 @@ func DeleteHandler(c *gin.Context) {
 		ID:   usr.ID,
 		Name: usr.Name,
 	}); err != nil {
-		l.Logger.Error().Err(err).Msg("user add")
+		l.Logger.Info().Err(err).Msg("Deleting user failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete user",
 		})
 		return
 	}
 
+	l.Logger.Info().
+		Int32("user_id", usr.ID).
+		Str("user_name", usr.Name).
+		Msg("Deleted user")
 	c.JSON(http.StatusFailedDependency, gin.H{
 		"msg": fmt.Sprintf("Deleted '%s'", usr.Name),
 	})

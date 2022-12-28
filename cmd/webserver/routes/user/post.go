@@ -1,4 +1,5 @@
-package user
+package user // nolint: dupl
+// This is intentionally equal to adding user.
 
 import (
 	"context"
@@ -24,33 +25,42 @@ func PostHandler(c *gin.Context) {
 		})
 		return
 	}
+	l.Logger.Info().
+		Str("user_name", usr.Name).
+		Msg("Adding user")
 
-	if !isValidName(usr.Name) {
+	if usr.Name == "" || !isValidName(usr.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Not a valid name",
+			"error": "Name parameter empty or invalid",
 		})
 		return
 	}
 
 	p, ok := c.Keys["db"].(*pgxpool.Pool)
 	if !ok {
+		l.Logger.Error().Msg("No database stored in Gin context")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to connect database",
 		})
 		return
 	}
 	q := sqlc.New(p)
-	if _, err = q.AddUser(ctx, sqlc.AddUserParams{
+	uid, err := q.AddUser(ctx, sqlc.AddUserParams{
 		Name: usr.Name,
 		Age:  usr.Age,
-	}); err != nil {
-		l.Logger.Error().Err(err).Msg("user add")
+	})
+	if err != nil {
+		l.Logger.Error().Err(err).Msg("Adding user failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to add user",
 		})
 		return
 	}
 
+	l.Logger.Info().
+		Int32("user_id", uid).
+		Str("user_name", usr.Name).
+		Msg("Added user")
 	c.JSON(http.StatusCreated, gin.H{
 		"msg": fmt.Sprintf("Added '%s'", usr.Name),
 	})
