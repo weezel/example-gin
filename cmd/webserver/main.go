@@ -30,10 +30,13 @@ func main() {
 	}
 
 	var dbConn *pgxpool.Pool
-
 	// This must be before httpserver.New() since that sets the database pointer to
 	// Gin context.
 	dbConn, err = db.New(ctx, cfg)
+	if err != nil {
+		l.Logger.Fatal().Err(err).Msg("Database connection failed")
+	}
+
 	r := httpserver.New()
 	routes.AddRoutes(r)
 	srv := httpserver.Config(r)
