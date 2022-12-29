@@ -37,9 +37,9 @@ func main() {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
 
-	r := httpserver.New()
-	routes.AddRoutes(r)
-	srv := httpserver.Config(r)
+	engine := httpserver.New()
+	routes.AddRoutes(engine)
+	srv := httpserver.Config(engine)
 	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below
 	go func() {
 		if err = srv.ListenAndServe(); err != nil &&
