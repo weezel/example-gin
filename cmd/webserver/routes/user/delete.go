@@ -62,6 +62,6 @@ func DeleteHandler(c *gin.Context) {
 		Str("user_name", usr.Name).
 		Msg("Deleted user")
 	c.JSON(http.StatusOK, gin.H{
-		"msg": fmt.Sprintf("Deleted '%s'", usr.Name),
+		"msg": fmt.Sprintf("Deleted user '%s'", usr.Name),
 	})
 }

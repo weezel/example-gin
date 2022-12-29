@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"
@@ -62,6 +63,6 @@ func PostHandler(c *gin.Context) {
 		Str("user_name", usr.Name).
 		Msg("Added user")
 	c.JSON(http.StatusCreated, gin.H{
-		"msg": fmt.Sprintf("Added '%s'", usr.Name),
+		"msg": fmt.Sprintf("Added user '%s'", usr.Name),
 	})
 }
