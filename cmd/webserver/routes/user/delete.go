@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"
@@ -60,7 +61,7 @@ func DeleteHandler(c *gin.Context) {
 		Int32("user_id", usr.ID).
 		Str("user_name", usr.Name).
 		Msg("Deleted user")
-	c.JSON(http.StatusFailedDependency, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"msg": fmt.Sprintf("Deleted '%s'", usr.Name),
 	})
 }
