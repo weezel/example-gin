@@ -25,13 +25,20 @@ all: test lint build
 
 build:
 	-rm -rf cmd/webserver/schemas
-	# Embed cannot travel to parent directories, hence copy
-	# migration files here.
-	cp -R sql/schemas/ cmd/webserver/
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
 		-o target/webserver_$(GOOS)_$(GOARCH) \
 		cmd/webserver/main.go
+
+build-dbmigrate:
+	-rm -rf cmd/dbmigrate/schemas
+	# Embed cannot travel to parent directories, hence copy
+	# migration files here.
+	cp -R sql/schemas/ cmd/dbmigrate/
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) \
+		$(GO) build $(LDFLAGS) \
+		-o target/dbmigrate_$(GOOS)_$(GOARCH) \
+		cmd/dbmigrate/main.go
 
 .PHONY: clean
 clean:
@@ -56,17 +63,13 @@ migrate-add:
 	@echo "Creating a new database migration"
 	@goose -dir sql/schemas/ create $(name) sql
 
-migrate-status:
+migrate-status: build-dbmigrate
 	@echo "Status of database migrations"
-	@goose -dir sql/schemas/ postgres \
-		"user=$(DB_USERNAME) password=$(DB_PASSWORD) dbname=$(DB_NAME) port=$(DB_PORT) sslmode=disable" \
-		status
+	@./target/dbmigrate_$(GOOS)_$(GOARCH) -s
 
-migrate-all:
+migrate-all: build-dbmigrate
 	@echo "Performing all database migrations"
-	@goose -dir sql/schemas/ postgres \
-		"user=$(DB_USERNAME) password=$(DB_PASSWORD) dbname=$(DB_NAME) port=$(DB_PORT) sslmode=disable" \
-		up
+	@./target/dbmigrate_$(GOOS)_$(GOARCH) -m
 
 create-db:
 	-@$(PSQL_CLIENT) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/ \
@@ -98,7 +101,7 @@ test:
 	go test ./...
 
 # This runs all tests, including integration tests
-test-integration: postgresql create-db-integrations
+test-integration: start-db
 	-@go test -tags=integration ./...
 	@docker compose down
 
