@@ -7,6 +7,6 @@ import (
 )
 
 func HealthCheckHandler(c *gin.Context) {
-	// TODO disable logging
+	// This route isn't logged. See our custom logging middleware for more info.
 	c.String(http.StatusOK, "OK\n")
 }

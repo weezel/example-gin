@@ -1,6 +1,7 @@
 package ginmiddleware
 
 import (
+	"strings"
 	"time"
 
 	l "weezel/example-gin/pkg/logger"
@@ -9,6 +10,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+var routesNoLog = []string{
+	"/health",
+	"/metrics",
+}
 
 // DefaultStructuredLogger logs a gin HTTP request in JSON format. Uses the
 // default logger from rs/zerolog.
@@ -22,12 +28,17 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
-		// Process request
-		c.Next()
+		// Don't log on certain routes
+		for _, noLog := range routesNoLog {
+			if strings.HasSuffix(c.Request.RequestURI, noLog) {
+				// Process request before exiting
+				c.Next()
+				return
+			}
+		}
 
 		// Fill the param
 		param := gin.LogFormatterParams{
-			// Request:      &http.Request{},
 			TimeStamp:    start,
 			StatusCode:   c.Writer.Status(),
 			Latency:      time.Since(start),
@@ -65,5 +76,8 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 			Str("path", param.Path).
 			Str("latency", param.Latency.String()).
 			Msg(param.ErrorMessage)
+
+		// Process request before exiting
+		c.Next()
 	}
 }
