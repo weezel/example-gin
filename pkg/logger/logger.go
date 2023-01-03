@@ -30,10 +30,13 @@ func UniqID() string {
 }
 
 func init() {
+	var logLevel zerolog.Level
 	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		logLevel = zerolog.DebugLevel
 	} else {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		logLevel = zerolog.InfoLevel
 	}
 
 	uniqID = randID()
@@ -41,6 +44,7 @@ func init() {
 	zerolog.TimeFieldFormat = time.RFC3339
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	Logger = zerolog.New(os.Stdout).
+		Level(logLevel).
 		With().
 		Timestamp().
 		Str("uniq_id", uniqID).
