@@ -3,6 +3,7 @@ name		?= you-didnt-define-migration-name
 
 GO		?= go
 DOCKER		?= docker
+DOCKER_BUILDKIT ?= 1
 VERSION		?= $(shell git log --pretty=format:%h -n 1)
 BUILD_TIME	?= $(shell date)
 # -s removes symbol table and -ldflags -w debugging symbols
@@ -30,7 +31,7 @@ build-webserver:
 	-rm -rf cmd/webserver/schemas
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
-		-o target/webserver_$(GOOS)_$(GOARCH) \
+		-o target/webserver \
 		cmd/webserver/main.go
 
 build-dbmigrate:
@@ -40,7 +41,7 @@ build-dbmigrate:
 	cp -R sql/schemas/ cmd/dbmigrate/
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
-		-o target/dbmigrate_$(GOOS)_$(GOARCH) \
+		-o target/dbmigrate \
 		cmd/dbmigrate/main.go
 
 .PHONY: clean
@@ -60,7 +61,16 @@ escape-analysis:
 	$(GO) build -gcflags="-m" 2>&1
 
 docker-build:
-	$(DOCKER) build --rm --target app -t $(APP)-build .
+	@DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) $(DOCKER) \
+			build --rm --target app -t $(APP)-build .
+
+docker-get-artifact:
+	-mkdir -p target/webserver
+	$(DOCKER) create -ti --name tmp $(APP)-builder /bin/bash
+	$(DOCKER) cp tmp:/go/src/app/target/webserver target/webserver/main
+	$(DOCKER) rm -f tmp
+
+build-artifact: docker-build docker-get-artifact
 
 migrate-add:
 	@echo "Creating a new database migration"
@@ -68,11 +78,11 @@ migrate-add:
 
 migrate-status: build-dbmigrate
 	@echo "Status of database migrations"
-	@./target/dbmigrate_$(GOOS)_$(GOARCH) -s
+	@./target/dbmigrate -s
 
 migrate-all: build-dbmigrate
 	@echo "Performing all database migrations"
-	@./target/dbmigrate_$(GOOS)_$(GOARCH) -m
+	@./target/dbmigrate -m
 
 create-db:
 	-@$(PSQL_CLIENT) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/ \
