@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,9 +21,33 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+// These will be filled in the build time by -X flag
+var (
+	Version   string
+	BuildTime string
+)
+
+// Flags
+var (
+	showVersion bool
+)
+
 func main() {
 	ctx := context.Background()
 	var err error
+
+	flag.BoolVar(&showVersion, "v", false, "Show version and build time")
+	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("Version: %s Build time: %s\n", Version, BuildTime)
+		os.Exit(0)
+	}
+
+	l.Logger.Info().
+		Str("version", Version).
+		Str("build_time", BuildTime).
+		Msg("Current build")
 
 	// Load config
 	cfg := config.Config{}

@@ -17,10 +17,18 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
+// These will be filled in the build time by -X flag
+var (
+	Version   string
+	BuildTime string
+)
+
+// Flags
 var (
 	migrateAll  bool
 	rollbackAll bool
 	showStatus  bool
+	showVersion bool
 	wd          string
 )
 
@@ -45,7 +53,18 @@ func main() {
 	flag.BoolVar(&migrateAll, "m", false, "Run all migrations")
 	flag.BoolVar(&rollbackAll, "r", false, "Rollback all migrations")
 	flag.BoolVar(&showStatus, "s", false, "Show status of migrations")
+	flag.BoolVar(&showVersion, "v", false, "Show version and build time")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("Version: %s Build time: %s\n", Version, BuildTime)
+		os.Exit(0)
+	}
+
+	l.Logger.Info().
+		Str("version", Version).
+		Str("build_time", BuildTime).
+		Msg("Current build")
 
 	if !migrateAll && !rollbackAll && !showStatus {
 		flag.Usage()

@@ -3,8 +3,11 @@ name		?= you-didnt-define-migration-name
 
 GO		?= go
 DOCKER		?= docker
+VERSION		?= $(shell git log --pretty=format:%h -n 1)
+BUILD_TIME	?= $(shell date)
 # -s removes symbol table and -ldflags -w debugging symbols
-LDFLAGS		?= -asmflags -trimpath -ldflags "-s -w"
+LDFLAGS		?= -asmflags -trimpath -ldflags \
+		   "-s -w -X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}'"
 GOARCH		?= amd64
 GOOS		?= linux
 # CGO_ENABLED=0 == static by default
