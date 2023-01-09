@@ -51,5 +51,5 @@ func init() {
 		Caller().
 		Logger()
 
-	Logger.Info().Msgf("Starting logger on level %s", Logger.GetLevel())
+	Logger.Debug().Msgf("Starting logger on level %s", Logger.GetLevel())
 }
