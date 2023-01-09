@@ -24,9 +24,9 @@ DB_PASSWORD	?= $(shell awk -F '=' '/^DB_PASSWORD/ { print $$NF }' .env)
 COMPOSE_FILE	?= docker-compose.yml
 
 
-all: test lint build
+all: test lint build-webserver
 
-build:
+build-webserver:
 	-rm -rf cmd/webserver/schemas
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \

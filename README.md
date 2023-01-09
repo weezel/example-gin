@@ -51,7 +51,7 @@ Type `make install-dependencies` to retrieve Go packages needed by the project.
 ### Demoing usage
 
 ```bash
-make stop-db start-db build
+make stop-db start-db build-webserver
 export $(grep -v "^#" .env |xargs)
 ./target/webserver_linux_amd64 &
 ./t.sh
