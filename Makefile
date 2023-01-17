@@ -38,7 +38,7 @@ build-dbmigrate:
 	-rm -rf cmd/dbmigrate/schemas
 	# Embed cannot travel to parent directories, hence copy
 	# migration files here.
-	cp -R sql/schemas/ cmd/dbmigrate/
+	cp -R sql/schemas cmd/dbmigrate/
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
 		-o target/dbmigrate \
