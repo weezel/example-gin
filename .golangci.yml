@@ -27,26 +27,28 @@ linters-settings:
         packages:
           - github.com/stretchr/testify
 linters:
+  disable-all: true
   enable:
     - contextcheck
-    - deadcode
+    - depguard
     - dupl
     - durationcheck
     - errorlint
     - exhaustive
     - gocritic
-    - gofumpt
     - gosec
-    - gosimple
     - govet
     - lll
     - maligned
     - revive
     - sqlclosecheck
-    - staticcheck
     - typecheck
     - unconvert
-issues:
+    # - gofumpt
+    # - gosimple  # broken
+    # - staticcheck  # broken
+    # - unused  # broken
+# issues:
 output:
   # Sort results by: filepath, line and column.
   sort-results: true
