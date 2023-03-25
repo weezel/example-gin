@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"weezel/example-gin/pkg/ginmiddleware"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,9 @@ func New() *gin.Engine {
 	r := gin.New()
 	// Use our own logging middleware
 	r.Use(ginmiddleware.DefaultStructuredLogger())
+	// Database connection must be established at this point!
 	r.Use(ginmiddleware.Postgres())
+	r.Use(ginmiddleware.SecureHeaders())
 	r.Use(gin.Recovery())
 
 	return r
