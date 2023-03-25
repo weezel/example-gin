@@ -20,6 +20,12 @@ linters-settings:
     # Tab width in spaces.
     # Default: 1
     tab-width: 8
+  depguard:
+    additional-guards:
+      - list-type: denylist
+        include-go-root: false
+        packages:
+          - github.com/stretchr/testify
 linters:
   enable:
     - contextcheck
