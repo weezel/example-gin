@@ -33,21 +33,23 @@ linters:
     - depguard
     - dupl
     - durationcheck
+    - errcheck # default
     - errorlint
     - exhaustive
     - gocritic
     - gosec
-    - govet
+    - govet  # default
+    - ineffassign  # default
     - lll
     - maligned
     - revive
     - sqlclosecheck
-    - typecheck
+    - typecheck  # default
     - unconvert
     # - gofumpt
-    # - gosimple  # broken
-    # - staticcheck  # broken
-    # - unused  # broken
+    # - gosimple  # default ,broken
+    # - staticcheck  # default ,broken
+    # - unused  # default ,broken
 # issues:
 output:
   # Sort results by: filepath, line and column.
