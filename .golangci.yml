@@ -1,9 +1,16 @@
 run:
   timeout: 3m
-  go: "1.20"
+  go: ""  # empty -> will be read from go.mod file instead
   skip-dirs:
     # Directory has generated code
     - pkg/generated
+  # Also lint tests
+  tests: true
+  # When enabled these are skipped:
+  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  skip-dirs-use-default: false
+  allow-parallel-runners: false
+  concurrency: 2
 linters-settings:
   gocritic:
     disabled-checks:
@@ -29,6 +36,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - bodyclose
     - contextcheck
     - depguard
     - dupl
@@ -36,21 +44,31 @@ linters:
     - errcheck # default
     - errorlint
     - exhaustive
+    - exportloopref
     - gocritic
+    - gofmt
     - gofumpt
+    - goimports
     - gosec
     - gosimple  # default
     - govet  # default
     - ineffassign  # default
     - lll
     - maligned
+    - nolintlint
     - revive
     - sqlclosecheck
     - staticcheck  # default
     - typecheck  # default
     - unconvert
     - unused  # default
+    - usestdlibvars
 # issues:
 output:
   # Sort results by: filepath, line and column.
   sort-results: true
+
+issues:
+  # Show all the results, don't hide anything
+  max-issues-per-linter: 0
+  max-same-issues: 0
