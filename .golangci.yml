@@ -37,19 +37,19 @@ linters:
     - errorlint
     - exhaustive
     - gocritic
+    - gofumpt
     - gosec
+    - gosimple  # default
     - govet  # default
     - ineffassign  # default
     - lll
     - maligned
     - revive
     - sqlclosecheck
+    - staticcheck  # default
     - typecheck  # default
     - unconvert
-    # - gofumpt
-    # - gosimple  # default ,broken
-    # - staticcheck  # default ,broken
-    # - unused  # default ,broken
+    - unused  # default
 # issues:
 output:
   # Sort results by: filepath, line and column.
