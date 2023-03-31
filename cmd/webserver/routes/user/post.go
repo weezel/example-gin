@@ -1,4 +1,4 @@
-package user // nolint: dupl
+package user //nolint: dupl
 // This is intentionally equal to adding user.
 
 import (
