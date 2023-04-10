@@ -19,6 +19,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.opentelemetry.io/otel"
 )
 
 // These will be filled in the build time by -X flag
@@ -63,7 +64,19 @@ func main() {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
 
-	engine := httpserver.New()
+	// Create a new HTTP engine and Opentelemetry Trace provider.
+	// Trace provider uses Gin's middleware so it's omnipresent.
+	engine, traceProvider := httpserver.New()
+	defer func() {
+		// There's no constant for context cancellation in
+		// tracer's context, therefore use dynamicly created error
+		if err = traceProvider.Shutdown(ctx); err != nil &&
+			errors.Is(err, errors.New("context canceled")) {
+			l.Logger.Error().Err(err).Msg("Failed to shutdown opentelemetry tracer")
+		}
+	}()
+	otel.SetTracerProvider(traceProvider)
+
 	routes.AddRoutes(engine)
 	srv := httpserver.Config(engine)
 	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below

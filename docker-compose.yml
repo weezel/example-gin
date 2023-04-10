@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  my-app:
+  example-gin:
     image: "postgres:14.4"
     restart: on-failure:3
     environment:
@@ -13,3 +13,12 @@ services:
     #volumes:
     #  - "$PWD/postgres-data:/var/lib/postgresql/data:rw"
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+     - "127.0.0.1:14250:14250"
+     - "127.0.0.1:14268:14268"
+     - "127.0.0.1:16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
