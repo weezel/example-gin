@@ -4,13 +4,14 @@
 
 A boilerplate project for a Gin webserver.
 Idea is to follow best practices and have a good starting point for any
-project which involves one of the followin or all of them:
+project which involves one of the following or all of them:
 
 * **PostgreSQL** database access with **sqlc**
 * Local PostgreSQL integration tests
 * **Gin Gonic** Web server
 * Additional yet useful static code analysis with **golangci-lint**
 * Have a nice structured logging with tracing offered by **Zerolog**
+* Enable **OpenTelemetry** tracing for better view on performance insights
 
 Example logging with Zerolog middleware hooked to Gin Gonic:
 
@@ -40,6 +41,7 @@ Example logging with Zerolog middleware hooked to Gin Gonic:
     the shutdown.
 * Database retry with exponential backoff and connection pooling.
 * Gin middlewares for logging and database.
+* Enable OpenTelemetry tracing with Gin Gonic integration by default.
 * No logging for certain routes/paths (currently /health and /metrics).
 
 ## Usage
@@ -69,5 +71,6 @@ The newly added migration can be found under [sql/schemas/](sql/schemas/).
 
 ## TODO
 
-* TODO AWS X-Ray tracing
-* Tests
+* Finalize integration tests
+* Create separate unprivileged API users for Postgres access
+* Add an example of proper database transaction cancellation with Golang's cancel
