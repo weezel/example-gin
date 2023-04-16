@@ -28,7 +28,6 @@ COMPOSE_FILE	?= docker-compose.yml
 all: test lint build-webserver
 
 build-webserver:
-	-rm -rf cmd/webserver/schemas
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
 		-o target/webserver \
@@ -36,7 +35,7 @@ build-webserver:
 
 build-dbmigrate:
 	-rm -rf cmd/dbmigrate/schemas
-	# Embed cannot travel to parent directories, hence copy
+	# Embed cannot travel beyond parent directories, hence copy
 	# migration files here.
 	cp -R sql/schemas cmd/dbmigrate/
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
@@ -52,6 +51,8 @@ install-dependencies:
 	@go get -d -v ./...
 
 lint:
+	-rm -rf cmd/dbmigrate/schemas
+	cp -R sql/schemas cmd/dbmigrate/
 	@golangci-lint run ./...
 
 vulncheck:
