@@ -1,0 +1,40 @@
+name: Linting and static code analysis
+
+permissions: {} # no need any permissions
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+
+jobs:
+  run:
+    name: Lint and static code analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+
+      - name: Copy sql files to dbmgirate directory for embed usage
+        shell: bash
+        run: "cp -R sql/schemas cmd/dbmigrate/"
+        working-directory: "."
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout 5m
+          working-directory: "."
