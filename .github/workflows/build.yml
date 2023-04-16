@@ -1,0 +1,51 @@
+name: Build
+
+permissions: {} # no need any permissions
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+  pull_request:
+    branches: ["*"]
+  workflow_call:
+    inputs:
+      skipTests:
+        description: "Skip tests, useful when there is a dedicated CI job for tests"
+        default: false
+        required: false
+        type: boolean
+
+jobs:
+  run:
+    name: Build and run tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+          check-latest: true
+
+      - name: Test and compile binaries
+        run: make all
+        shell: bash
+
+      # - name: Upload Coverage
+      #   if: ${{ !inputs.skipTests }}
+      #   uses: codecov/codecov-action@v3
+      #   continue-on-error: true
+      #   with:
+      #     token: ${{secrets.CODECOV_TOKEN}}
+      #     file: ./coverage.txt
+      #     fail_ci_if_error: false
