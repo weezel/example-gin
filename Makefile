@@ -1,4 +1,3 @@
-APP		?= my-app
 name		?= you-didnt-define-migration-name
 
 GO		?= go
@@ -25,27 +24,17 @@ DB_PASSWORD	?= $(shell awk -F '=' '/^DB_PASSWORD/ { print $$NF }' .env)
 COMPOSE_FILE	?= docker-compose.yml
 
 
-all: test lint build-webserver
+all: test lint build
 
-build-webserver:
+build:
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
-		-o target/webserver \
-		cmd/webserver/main.go
-
-build-dbmigrate:
-	-rm -rf cmd/dbmigrate/schemas
-	# Embed cannot travel beyond parent directories, hence copy
-	# migration files here.
-	cp -R sql/schemas cmd/dbmigrate/
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
-		$(GO) build $(LDFLAGS) \
-		-o target/dbmigrate \
-		cmd/dbmigrate/main.go
+		-o dist/$(APP_NAME) \
+		main.go
 
 .PHONY: clean
 clean:
-	rm -rf target/
+	rm -rf dist/
 
 install-dependencies:
 	@go get -d -v ./...
@@ -63,12 +52,12 @@ escape-analysis:
 
 docker-build:
 	@DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) $(DOCKER) \
-			build --rm --target app -t $(APP)-build .
+			build --rm --target app -t $(APP_NAME)-build .
 
 docker-get-artifact:
-	-mkdir -p target/webserver
-	$(DOCKER) create -ti --name tmp $(APP)-builder /bin/bash
-	$(DOCKER) cp tmp:/go/src/app/target/webserver target/webserver/main
+	-mkdir -p dist/webserver
+	$(DOCKER) create -ti --name tmp $(APP_NAME)-builder /bin/bash
+	$(DOCKER) cp tmp:/go/src/app/dist/webserver dist/webserver/main
 	$(DOCKER) rm -f tmp
 
 build-artifact: docker-build docker-get-artifact
@@ -79,11 +68,11 @@ migrate-add:
 
 migrate-status: build-dbmigrate
 	@echo "Status of database migrations"
-	@./target/dbmigrate -s
+	@./dist/dbmigrate -s
 
 migrate-all: build-dbmigrate
 	@echo "Performing all database migrations"
-	@./target/dbmigrate -m
+	@./dist/dbmigrate -m
 
 create-db:
 	-@$(PSQL_CLIENT) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/ \
