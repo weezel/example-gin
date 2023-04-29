@@ -26,7 +26,9 @@ COMPOSE_FILE	?= docker-compose.yml
 
 all: test lint build
 
-build:
+_build: dist/$(APP_NAME)
+
+dist/$(APP_NAME):
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(LDFLAGS) \
 		-o dist/$(APP_NAME) \
