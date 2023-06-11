@@ -29,7 +29,7 @@ var (
 	rollbackAll bool
 	showStatus  bool
 	showVersion bool
-	wd          string
+	wd          string //nolint:unused // This is an inner variable affect working directory
 )
 
 var schemasDir = "schemas"

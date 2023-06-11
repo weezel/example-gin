@@ -1,4 +1,5 @@
-package user //nolint: dupl
+package user
+
 // This is intentionally equal to deleting user.
 
 import (
