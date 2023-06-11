@@ -20,6 +20,8 @@ var (
 func randID() string {
 	data := make([]byte, 8)
 	if _, err := rand.Read(data); err != nil {
+		// In practice, this shouldn't ever happen with the modern Linux kernel
+		// now that entoropy pool is endless.
 		data = []byte{'f', 'o', 'o', 'b', 'a', 'r', 'b', 'z'}
 	}
 	return fmt.Sprintf("%x", sha256.Sum256(data))[0:8]
@@ -27,6 +29,11 @@ func randID() string {
 
 func UniqID() string {
 	return uniqID
+}
+
+func isInteractive() bool {
+	fileInfo, _ := os.Stdout.Stat()
+	return (fileInfo.Mode() & os.ModeCharDevice) != 0
 }
 
 func init() {
@@ -50,6 +57,10 @@ func init() {
 		Str("uniq_id", uniqID).
 		Caller().
 		Logger()
+
+	if isInteractive() {
+		Logger = Logger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
 
 	Logger.Debug().Msgf("Starting logger on level %s", Logger.GetLevel())
 }
