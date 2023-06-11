@@ -1,6 +1,6 @@
 run:
   timeout: 3m
-  go: ""  # empty -> will be read from go.mod file instead
+  go: "" # empty -> will be read from go.mod file instead
   skip-dirs:
     # Directory has generated code
     - pkg/generated
@@ -52,18 +52,18 @@ linters:
     - gofumpt
     - goimports
     - gosec
-    - gosimple  # default
-    - govet  # default
-    - ineffassign  # default
+    - gosimple # default
+    - govet # default
+    - ineffassign # default
     - lll
     - maligned
     - nolintlint
     - revive
     - sqlclosecheck
-    - staticcheck  # default
-    - typecheck  # default
+    - staticcheck # default
+    - typecheck # default
     - unconvert
-    - unused  # default
+    - unused # default
     - usestdlibvars
 # issues:
 output:
