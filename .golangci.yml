@@ -28,11 +28,13 @@ linters-settings:
     # Default: 1
     tab-width: 8
   depguard:
-    additional-guards:
-      - list-type: denylist
-        include-go-root: false
-        packages:
-          - github.com/stretchr/testify
+    rules:
+      main:
+        files:
+          - "**/*.go"
+        deny:
+          - pkg: "github.com/stretchr/testify"
+            desc: "Use stdlib for testing purposes"
 linters:
   disable-all: true
   enable:
