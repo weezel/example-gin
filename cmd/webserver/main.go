@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/httpserver"
@@ -18,7 +17,6 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 
-	"github.com/caarlos0/env/v6"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.opentelemetry.io/otel"
 )
@@ -53,14 +51,14 @@ func main() {
 
 	// Load config
 	cfg := config.Config{}
-	if err = env.Parse(&cfg); err != nil {
+	if err = cfg.Parse(); err != nil {
 		l.Logger.Panic().Err(err).Msg("Failed to parse config")
 	}
 
 	var dbConn *pgxpool.Pool
 	// This must be before httpserver.New() since that sets the database pointer to
 	// Gin context.
-	dbConn, err = postgres.New(ctx, cfg)
+	dbConn, err = postgres.New(ctx, cfg.Postgres)
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}

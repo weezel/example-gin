@@ -28,12 +28,12 @@ var (
 var ErrorDatabaseRetriesExceeded = errors.New("databse retries exceeded")
 
 // New initializes database connection once. Also known as singleton.
-func New(ctx context.Context, dbConf config.Config) (*pgxpool.Pool, error) {
+func New(ctx context.Context, dbConf config.Postgres) (*pgxpool.Pool, error) {
 	pgConfigURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?"+postgresConfig,
-		dbConf.DBUsername,
-		dbConf.DBPassword,
-		dbConf.DBHostname,
-		dbConf.DBPort,
+		dbConf.Username,
+		dbConf.Password,
+		dbConf.Hostname,
+		dbConf.Port,
 		dbConf.DBName)
 	var retries int
 	once.Do(func() {

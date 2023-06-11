@@ -13,7 +13,6 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 
-	"github.com/caarlos0/env/v6"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -48,18 +47,18 @@ func init() {
 	}
 }
 
-func createDatabase(ctx context.Context, cfg config.Config, dbName string) error {
+func createDatabase(ctx context.Context, cfg config.Postgres, dbName string) error {
 	// Intentionally use hardcoded postgres username and database here
 	// For RDS username is the specially created admin user
 	psqlConfig := fmt.Sprintf("user=postgres password=%s host=%s port=%s dbname=postgres sslmode=disable",
-		cfg.DBPassword,
-		cfg.DBHostname,
-		cfg.DBPort)
+		cfg.Password,
+		cfg.Hostname,
+		cfg.Port)
 	l.Logger.Debug().
-		Str("username", cfg.DBUsername).
-		Str("password", cfg.DBPassword[0:1]+"...").
-		Str("hostname", cfg.DBHostname).
-		Str("port", cfg.DBPort).
+		Str("username", cfg.Username).
+		Str("password", cfg.Password[0:1]+"...").
+		Str("hostname", cfg.Hostname).
+		Str("port", cfg.Port).
 		Str("dbname", "postgres").
 		Msg("Database creation connection")
 	dbConn, err := sql.Open("pgx", psqlConfig)
@@ -100,22 +99,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg := config.Config{}
-	if err := env.Parse(&cfg); err != nil {
+	cfg := config.Postgres{}
+	if err := cfg.Parse(); err != nil {
 		l.Logger.Panic().Err(err).Msg("Failed to parse config")
 	}
 
 	psqlConfig := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		cfg.DBUsername,
-		cfg.DBPassword,
-		cfg.DBHostname,
-		cfg.DBPort,
+		cfg.Username,
+		cfg.Password,
+		cfg.Hostname,
+		cfg.Port,
 		cfg.DBName)
 	l.Logger.Debug().
-		Str("username", cfg.DBUsername).
-		Str("password", cfg.DBPassword[0:3]+"...").
-		Str("hostname", cfg.DBHostname).
-		Str("port", cfg.DBPort).
+		Str("username", cfg.Username).
+		Str("password", cfg.Password[0:3]+"...").
+		Str("hostname", cfg.Hostname).
+		Str("port", cfg.Port).
 		Str("dbname", cfg.DBName).
 		Msg("Database configuration")
 	dbConn, err := sql.Open("pgx", psqlConfig)

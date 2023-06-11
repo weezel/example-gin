@@ -3,6 +3,7 @@ module weezel/example-gin
 go 1.20
 
 require (
+	github.com/google/go-cmp v0.5.9
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/rs/zerolog v1.28.0
@@ -42,7 +43,7 @@ require (
 )
 
 require (
-	github.com/caarlos0/env/v6 v6.10.1
+	github.com/caarlos0/env/v8 v8.0.0
 	github.com/gin-gonic/gin v1.8.2
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
