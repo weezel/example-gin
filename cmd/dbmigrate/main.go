@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"weezel/example-gin/pkg/config"
 
 	l "weezel/example-gin/pkg/logger"
@@ -45,6 +46,34 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func createDatabase(ctx context.Context, cfg config.Config, dbName string) error {
+	// Intentionally use hardcoded postgres username and database here
+	// For RDS username is the specially created admin user
+	psqlConfig := fmt.Sprintf("user=postgres password=%s host=%s port=%s dbname=postgres sslmode=disable",
+		cfg.DBPassword,
+		cfg.DBHostname,
+		cfg.DBPort)
+	l.Logger.Debug().
+		Str("username", cfg.DBUsername).
+		Str("password", cfg.DBPassword[0:1]+"...").
+		Str("hostname", cfg.DBHostname).
+		Str("port", cfg.DBPort).
+		Str("dbname", "postgres").
+		Msg("Database creation connection")
+	dbConn, err := sql.Open("pgx", psqlConfig)
+	if err != nil {
+		l.Logger.Panic().Err(err).Msg("Failed to open database connection")
+	}
+	defer dbConn.Close()
+
+	_, err = dbConn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s OWNER postgres ENCODING UTF8", dbName))
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -94,6 +123,10 @@ func main() {
 		l.Logger.Panic().Err(err).Msg("Failed to open database connection")
 	}
 	defer dbConn.Close()
+
+	if err = createDatabase(ctx, cfg, cfg.DBName); err != nil {
+		l.Logger.Panic().Err(err).Msg("Error creating database")
+	}
 
 	if err = dbConn.PingContext(ctx); err != nil {
 		l.Logger.Panic().Err(err).Msg("Ping database")

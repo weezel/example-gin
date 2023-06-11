@@ -76,10 +76,6 @@ migrate-all: build-dbmigrate
 	@echo "Performing all database migrations"
 	@./dist/dbmigrate -m
 
-create-db:
-	-@$(PSQL_CLIENT) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/ \
-		-q -c "CREATE DATABASE $(DB_NAME) OWNER postgres ENCODING UTF8;"
-
 db-dump:
 	$(PG_DUMP) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME) \
 		> $(DB_NAME)_dump_$(shell date "+%Y-%m-%d_%H:%M:%S").sql
@@ -93,7 +89,7 @@ postgresql:
 	echo "Waiting database to start up..."
 	@sleep 1
 
-start-db: postgresql create-db migrate-all
+start-db: postgresql migrate-all
 
 stop-db:
 	@$(DOCKER) compose down
