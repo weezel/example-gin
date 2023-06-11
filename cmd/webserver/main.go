@@ -10,10 +10,11 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
-	"weezel/example-gin/pkg/db"
 	"weezel/example-gin/pkg/httpserver"
+	"weezel/example-gin/pkg/postgres"
 
 	l "weezel/example-gin/pkg/logger"
 
@@ -59,7 +60,7 @@ func main() {
 	var dbConn *pgxpool.Pool
 	// This must be before httpserver.New() since that sets the database pointer to
 	// Gin context.
-	dbConn, err = db.New(ctx, cfg)
+	dbConn, err = postgres.New(ctx, cfg)
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
