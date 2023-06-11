@@ -112,7 +112,7 @@ func main() {
 		cfg.DBName)
 	l.Logger.Debug().
 		Str("username", cfg.Username).
-		Str("password", cfg.Password[0:3]+"...").
+		Str("password", cfg.Password[0:1]+"...").
 		Str("hostname", cfg.Hostname).
 		Str("port", cfg.Port).
 		Str("dbname", cfg.DBName).
