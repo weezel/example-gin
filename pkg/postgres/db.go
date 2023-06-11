@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sync"
@@ -23,6 +24,8 @@ var (
 	dbPool *pgxpool.Pool
 	dbErr  error
 )
+
+var ErrorDatabaseRetriesExceeded = errors.New("databse retries exceeded")
 
 // New initializes database connection once. Also known as singleton.
 func New(ctx context.Context, dbConf config.Config) (*pgxpool.Pool, error) {
@@ -57,11 +60,12 @@ func New(ctx context.Context, dbConf config.Config) (*pgxpool.Pool, error) {
 			l.Logger.Warn().Msgf("Retrying db connection %d/%d (%s since started)",
 				retries, dbConnRetries, time.Since(started))
 
+			if retries > dbConnRetries {
+				dbErr = ErrorDatabaseRetriesExceeded
+				return
+			}
 		}
 	})
-	if retries > dbConnRetries {
-		return nil, fmt.Errorf("Couldn't connect to database after %d retries", retries-1)
-	}
 
 	return dbPool, dbErr
 }
