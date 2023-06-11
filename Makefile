@@ -24,7 +24,7 @@ DB_PASSWORD	?= $(shell awk -F '=' '/^DB_PASSWORD/ { print $$NF }' .env)
 COMPOSE_FILE	?= docker-compose.yml
 
 
-all: test lint build
+all: test-unit lint build
 
 _build: dist/$(APP_NAME)
 
@@ -102,14 +102,15 @@ test-coverage:
 	go test -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 
-test:
-	go test ./...
+test-unit:
+	go test -race ./...
 
 # This runs all tests, including integration tests
 test-integration: start-db
-	-@go test -tags=integration ./...
+	-@go test -race -tags=integration ./...
 	@docker compose down
 
 .PHONY: sqlc
 sqlc:
 	sqlc generate
+
