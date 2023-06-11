@@ -28,7 +28,7 @@ Example logging with Zerolog middleware hooked to Gin Gonic:
 * [Golangci-lint](https://golangci-lint.run/) for linting and static code analysis.
 * [govulncheck](https://go.dev/security/vuln/) for package vulnerability analysis.
 * [Goose](https://github.com/pressly/goose) for database migrations.
-* [sqlc](https://sqlc.dev/) for database access.sct
+* [sqlc](https://sqlc.dev/) for database access.
 * [Zerolog](https://zerolog.io/) for structured and leveled logging.
 
 ## Features
