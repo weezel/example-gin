@@ -13,6 +13,7 @@ type Postgres struct {
 	DBName   string `env:"DB_NAME"`
 	Username string `env:"DB_USERNAME"`
 	Password string `env:"DB_PASSWORD,unset"` // XXX Use SecretsManager in AWS
+	TLS      string `env:"DB_TLS" envDefault:"prefer"`
 }
 
 func (p *Postgres) Parse() error {
