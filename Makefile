@@ -68,13 +68,12 @@ migrate-add:
 	@echo "Creating a new database migration"
 	@goose -dir sql/schemas/ create $(name) sql
 
-migrate-status: build-dbmigrate
-	@echo "Status of database migrations"
-	@./dist/dbmigrate -s
+build-dbmigrate:
+	make -C cmd/dbmigrate build
 
 migrate-all: build-dbmigrate
 	@echo "Performing all database migrations"
-	@./dist/dbmigrate -m
+	@./cmd/dbmigrate/dist/dbmigrate
 
 db-dump:
 	$(PG_DUMP) postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME) \
