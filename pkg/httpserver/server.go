@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/ginmiddleware"
 
 	l "weezel/example-gin/pkg/logger"
@@ -73,10 +74,10 @@ func New() (*gin.Engine, *sdktrace.TracerProvider) {
 	return r, tp
 }
 
-func Config(r http.Handler) *http.Server {
+func Config(r http.Handler, cfg config.HTTPServer) *http.Server {
 	return &http.Server{
 		ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
-		Addr:        ":8080",
+		Addr:        fmt.Sprintf("%s:%s", cfg.Hostname, cfg.Port),
 		Handler:     r,
 	}
 }
