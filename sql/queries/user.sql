@@ -16,7 +16,6 @@ RETURNING id;
 
 -- name: DeleteUser :one
 DELETE FROM homepage_schema.user
-	WHERE id = $1
-                AND name = $2
+	WHERE name = $1
 	RETURNING *;
 

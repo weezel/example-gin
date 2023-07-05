@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS homepage_schema.user(
         name TEXT NOT NULL,
         age  INTEGER NOT NULL,
         city TEXT,
-        phone TEXT
+        phone TEXT,
+        UNIQUE(name)
 );
 -- +goose StatementEnd
 

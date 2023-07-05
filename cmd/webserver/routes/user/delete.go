@@ -46,10 +46,7 @@ func DeleteHandler(c *gin.Context) {
 		return
 	}
 	q := sqlc.New(p)
-	if _, err = q.DeleteUser(ctx, sqlc.DeleteUserParams{
-		ID:   usr.ID,
-		Name: usr.Name,
-	}); err != nil {
+	if _, err = q.DeleteUser(ctx, usr.Name); err != nil {
 		l.Logger.Info().Err(err).Msg("Deleting user failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete user",

@@ -10,7 +10,7 @@ import (
 
 type Querier interface {
 	AddUser(ctx context.Context, arg AddUserParams) (int32, error)
-	DeleteUser(ctx context.Context, arg DeleteUserParams) (*HomepageSchemaUser, error)
+	DeleteUser(ctx context.Context, name string) (*HomepageSchemaUser, error)
 	GetUser(ctx context.Context, name string) (*HomepageSchemaUser, error)
 	ListUsers(ctx context.Context) ([]*HomepageSchemaUser, error)
 }

@@ -41,18 +41,12 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (int32, error)
 
 const deleteUser = `-- name: DeleteUser :one
 DELETE FROM homepage_schema.user
-	WHERE id = $1
-                AND name = $2
+	WHERE name = $1
 	RETURNING id, name, age, city, phone
 `
 
-type DeleteUserParams struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-}
-
-func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) (*HomepageSchemaUser, error) {
-	row := q.db.QueryRow(ctx, deleteUser, arg.ID, arg.Name)
+func (q *Queries) DeleteUser(ctx context.Context, name string) (*HomepageSchemaUser, error) {
+	row := q.db.QueryRow(ctx, deleteUser, name)
 	var i HomepageSchemaUser
 	err := row.Scan(
 		&i.ID,

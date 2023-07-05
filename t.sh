@@ -15,6 +15,9 @@ printf "\n### Get users\n"
 curl -X GET "localhost:8080/user/"
 
 printf "\n### Delete users\n"
-curl -d '{"name": "Jarmo", "id": 1}' -X DELETE "localhost:8080/user"
-curl -d '{"name": "Daniel", "id": 5}' -X DELETE "localhost:8080/user"
-curl -d '{"name": "Anni", "id": 2}' -X DELETE "localhost:8080/user"
+curl -d '{"name": "Jarmo"}' -X DELETE "localhost:8080/user"
+echo
+curl -d '{"name": "Daniel"}' -X DELETE "localhost:8080/user"
+echo
+curl -d '{"name": "Anni"}' -X DELETE "localhost:8080/user"
+echo
