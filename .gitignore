@@ -1,3 +1,4 @@
+**/dist/**
 cmd/webserver/schemas/
 cov.txt
 covdatafiles/
