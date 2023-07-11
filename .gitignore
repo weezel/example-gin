@@ -1,2 +1,7 @@
 cmd/webserver/schemas/
+cov.txt
+covdatafiles/
+coverage.out
+example-gin-cover
+merged_cov_data/
 target/
