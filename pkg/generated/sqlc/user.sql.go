@@ -7,7 +7,8 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addUser = `-- name: AddUser :one
@@ -21,10 +22,10 @@ RETURNING id
 `
 
 type AddUserParams struct {
-	Name  string         `json:"name"`
-	Age   int32          `json:"age"`
-	City  sql.NullString `json:"city"`
-	Phone sql.NullString `json:"phone"`
+	Name  string      `json:"name"`
+	Age   int32       `json:"age"`
+	City  pgtype.Text `json:"city"`
+	Phone pgtype.Text `json:"phone"`
 }
 
 func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (int32, error) {

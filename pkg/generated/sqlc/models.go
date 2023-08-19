@@ -5,13 +5,13 @@
 package sqlc
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type HomepageSchemaUser struct {
-	ID    int32          `json:"id"`
-	Name  string         `json:"name"`
-	Age   int32          `json:"age"`
-	City  sql.NullString `json:"city"`
-	Phone sql.NullString `json:"phone"`
+	ID    int32       `json:"id"`
+	Name  string      `json:"name"`
+	Age   int32       `json:"age"`
+	City  pgtype.Text `json:"city"`
+	Phone pgtype.Text `json:"phone"`
 }

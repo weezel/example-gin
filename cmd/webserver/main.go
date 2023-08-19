@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/httpserver"
@@ -17,7 +18,7 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
 )
 

@@ -3,12 +3,13 @@ package user
 import (
 	"context"
 	"net/http"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func IndexHandler(c *gin.Context) {

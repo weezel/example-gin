@@ -11,7 +11,7 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -37,7 +37,7 @@ func New(ctx context.Context, dbConf config.Postgres) (*pgxpool.Pool, error) {
 		dbConf.DBName)
 	var retries int
 	once.Do(func() {
-		dbPool, dbErr = pgxpool.Connect(ctx, pgConfigURL)
+		dbPool, dbErr = pgxpool.New(ctx, pgConfigURL)
 		if dbErr != nil {
 			l.Logger.Fatal().Err(dbErr).Msg("Failed to start database")
 		}
@@ -48,7 +48,7 @@ func New(ctx context.Context, dbConf config.Postgres) (*pgxpool.Pool, error) {
 				break
 			}
 
-			dbPool, dbErr = pgxpool.Connect(ctx, pgConfigURL)
+			dbPool, dbErr = pgxpool.New(ctx, pgConfigURL)
 			if dbErr == nil {
 				break
 			}
