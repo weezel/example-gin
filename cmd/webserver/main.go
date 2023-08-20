@@ -10,9 +10,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
+	"weezel/example-gin/pkg/generated/sqlc"
 	"weezel/example-gin/pkg/httpserver"
 	"weezel/example-gin/pkg/postgres"
 
@@ -63,6 +63,7 @@ func main() {
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
+	queries := sqlc.New(dbConn)
 
 	// Create a new HTTP engine and Opentelemetry Trace provider.
 	// Trace provider uses Gin's middleware so it's omnipresent.
@@ -77,7 +78,7 @@ func main() {
 	}()
 	otel.SetTracerProvider(traceProvider)
 
-	routes.AddRoutes(engine)
+	routes.AddRoutes(engine, queries)
 	srv := httpserver.Config(engine, cfg.HTTPServer)
 	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below
 	go func() {

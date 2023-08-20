@@ -7,15 +7,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"weezel/example-gin/pkg/generated/sqlc"
-
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func DeleteHandler(c *gin.Context) {
+func (h HandlerController) DeleteHandler(c *gin.Context) {
 	ctx := context.Background()
 	var err error
 
@@ -38,16 +35,7 @@ func DeleteHandler(c *gin.Context) {
 		return
 	}
 
-	p, ok := c.Keys["db"].(*pgxpool.Pool)
-	if !ok {
-		l.Logger.Error().Msg("No database stored in Gin context")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to connect database",
-		})
-		return
-	}
-	q := sqlc.New(p)
-	if _, err = q.DeleteUser(ctx, usr.Name); err != nil {
+	if _, err = h.querier.DeleteUser(ctx, usr.Name); err != nil {
 		l.Logger.Info().Err(err).Msg("Deleting user failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete user",

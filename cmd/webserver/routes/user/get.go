@@ -4,29 +4,17 @@ import (
 	"context"
 	"net/http"
 
-	"weezel/example-gin/pkg/generated/sqlc"
-
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func IndexHandler(c *gin.Context) {
+func (h HandlerController) IndexHandler(c *gin.Context) {
 	ctx := context.Background()
 
 	l.Logger.Info().Msg("Listing all users")
 
-	p, ok := c.Keys["db"].(*pgxpool.Pool)
-	if !ok {
-		l.Logger.Error().Msg("No database stored in Gin context")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to connect database",
-		})
-		return
-	}
-	q := sqlc.New(p)
-	users, err := q.ListUsers(ctx)
+	users, err := h.querier.ListUsers(ctx)
 	if err != nil {
 		l.Logger.Error().Err(err).Msg("Listing all users failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -41,7 +29,7 @@ func IndexHandler(c *gin.Context) {
 	})
 }
 
-func GetHandler(c *gin.Context) {
+func (h HandlerController) GetHandler(c *gin.Context) {
 	ctx := context.Background()
 
 	name := c.Param("name")
@@ -55,16 +43,7 @@ func GetHandler(c *gin.Context) {
 		return
 	}
 
-	p, ok := c.Keys["db"].(*pgxpool.Pool)
-	if !ok {
-		l.Logger.Error().Msg("No database stored in Gin context")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to connect database",
-		})
-		return
-	}
-	q := sqlc.New(p)
-	users, err := q.GetUser(ctx, name)
+	users, err := h.querier.GetUser(ctx, name)
 	if err != nil {
 		l.Logger.Info().Err(err).Msg("Getting user failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
