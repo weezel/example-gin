@@ -66,8 +66,6 @@ func New() (*gin.Engine, *sdktrace.TracerProvider) {
 	r.Use(otelgin.Middleware("example-gin"))
 	// Use our own logging middleware
 	r.Use(ginmiddleware.DefaultStructuredLogger())
-	// Database connection must be established at this point!
-	r.Use(ginmiddleware.Postgres())
 	r.Use(ginmiddleware.SecureHeaders())
 	r.Use(gin.Recovery())
 

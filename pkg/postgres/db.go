@@ -69,7 +69,3 @@ func New(ctx context.Context, dbConf config.Postgres) (*pgxpool.Pool, error) {
 
 	return dbPool, dbErr
 }
-
-func GetPool() *pgxpool.Pool {
-	return dbPool
-}
