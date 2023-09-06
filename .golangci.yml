@@ -18,6 +18,7 @@ linters-settings:
       - singleCaseSwitch
   govet:
     check-shadowing: true
+    enable-all: true
   lll:
     # Max line length, lines longer will be reported.
     # '\t' is counted as 1 character by default, and
@@ -56,7 +57,6 @@ linters:
     - govet # default
     - ineffassign # default
     - lll
-    - maligned
     - nolintlint
     - revive
     - sqlclosecheck
