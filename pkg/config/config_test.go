@@ -12,17 +12,17 @@ func TestConfig_Parse(t *testing.T) {
 	envLock := sync.Mutex{}
 
 	type fields struct {
+		setEnvVars      func()
 		config          Config
 		exptectedConfig Config
-		setEnvVars      func()
 	}
 	tests := []struct {
-		name    string
 		fields  fields
+		name    string
 		wantErr bool
 	}{
 		{
-			name: "",
+			name: "Test basic configuration",
 			fields: fields{
 				config: Config{
 					HTTPServer: HTTPServer{
