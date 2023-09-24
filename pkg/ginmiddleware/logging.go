@@ -39,7 +39,7 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 
 		// Fill the param
 		param := gin.LogFormatterParams{
-			TimeStamp:    start,
+			TimeStamp:    start, //nolint:govet // AFAIK this is actually used
 			StatusCode:   c.Writer.Status(),
 			Latency:      time.Since(start),
 			ClientIP:     c.ClientIP(),
@@ -47,7 +47,7 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 			Path:         c.Request.URL.Path,
 			ErrorMessage: c.Errors.ByType(gin.ErrorTypePrivate).String(),
 			BodySize:     c.Writer.Size(),
-			Keys:         map[string]any{},
+			Keys:         map[string]any{}, //nolint:govet // AFAIK this is actually used
 		}
 		if param.Latency > time.Minute {
 			param.Latency = param.Latency.Truncate(time.Second)
