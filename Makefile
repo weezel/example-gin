@@ -98,7 +98,7 @@ test-coverage:
 	go tool cover -func=coverage.out
 
 test-unit:
-	go test -race ./...
+	go test -short -failfast -race ./...
 
 # This runs all tests, including integration tests
 test-integration: start-db
