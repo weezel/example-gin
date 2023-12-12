@@ -94,7 +94,7 @@ stop-db:
 	@$(DOCKER) compose down
 
 test-coverage:
-	go test -race -coverprofile=coverage.out ./...
+	go test -failfast -race -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
 test-unit:
@@ -102,7 +102,7 @@ test-unit:
 
 # This runs all tests, including integration tests
 test-integration: start-db
-	-@go test -race -tags=integration ./...
+	go test -failfast -race -tags=integration ./...
 	@docker compose down
 
 .PHONY: sqlc

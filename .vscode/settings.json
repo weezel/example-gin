@@ -20,7 +20,8 @@
 		"--fix"
 	],
 	"go.testFlags": [
-		"-v"
+		"-failfast",
+		"-short"
 	],
 	"gopls": {
 		"gofumpt": true,
