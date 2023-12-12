@@ -1,36 +1,32 @@
 package httpserver
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/ginmiddleware"
 
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
-const (
-	serviceName = "example-gin"
-	appEnv      = "production"
-	jaegerURL   = "http://localhost:14268/api/traces"
-)
-
-func initTracer() (*sdktrace.TracerProvider, error) {
+func defaultTracer(ctx context.Context, serviceName, collectorAddress string) *sdktrace.TracerProvider {
 	// Create the Jaeger exporter
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
+	// exporter, err := otlptracehttp.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
+	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint(collectorAddress))
 	if err != nil {
-		return nil, err
+		l.Logger.Fatal().Err(err).Msg("Failed to setup tracer")
 	}
 
 	// For the demonstration, use sdktrace.AlwaysSample sampler to sample all traces.
@@ -39,43 +35,158 @@ func initTracer() (*sdktrace.TracerProvider, error) {
 		// Always be sure to batch in production.
 		sdktrace.WithBatcher(exporter),
 		// Record information about this application in a Resource.
-		sdktrace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName(fmt.Sprintf("%s_%s", serviceName, l.UniqID())),
-			attribute.String("environment", appEnv),
-		)),
+		sdktrace.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceName(fmt.Sprintf("%s_%s", serviceName, l.UniqID())),
+			),
+		),
 	)
-	return tp, nil
+	return tp
 }
 
-// New returns a new Gin engine with our custom configurations, like logging middleware.
-// This is a general implementation that can be used in any server.
-// Opentelemetry tracer is being hooked up as a middleware to get traces of the requests.
-// Returns gin Engine and OpenTelemetry tracer.
-func New() (*gin.Engine, *sdktrace.TracerProvider) {
-	tp, err := initTracer()
-	if err != nil {
-		l.Logger.Error().Err(err).Msg("Failed to initialize opentelemetry tracer")
-	}
+type Option func(*HTTPServer)
 
+type HTTPServer struct {
+	tracer     *sdktrace.TracerProvider
+	ginEngine  *gin.Engine
+	httpServer *http.Server
+}
+
+// New returns a new HTTP server with custom configurations, like structured logging middleware.
+// This is a general implementation that can be used in any server.
+// Leverages options pattern.
+func New(opts ...Option) *HTTPServer {
 	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	r := gin.New()
-	// Enable Opentelemetry tracing by default
-	r.Use(otelgin.Middleware("example-gin"))
+	httpServer := &HTTPServer{
+		tracer:    nil,
+		ginEngine: r,
+		httpServer: &http.Server{
+			ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
+			Addr:        ":8080",
+			Handler:     r,
+		},
+	}
+
 	// Use our own logging middleware
 	r.Use(ginmiddleware.DefaultStructuredLogger())
+	// Set secure headers
 	r.Use(ginmiddleware.SecureHeaders())
+	// Don't log health checks
+	r.GET("/health", healthCheckHandler)
+
 	r.Use(gin.Recovery())
 
-	return r, tp
+	// Override defaults if any options are given
+	for _, opt := range opts {
+		opt(httpServer)
+	}
+
+	return httpServer
 }
 
-func Config(r http.Handler, cfg config.HTTPServer) *http.Server {
-	return &http.Server{
-		ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
-		Addr:        fmt.Sprintf("%s:%s", cfg.Hostname, cfg.Port),
-		Handler:     r,
+func WithTracer(tracer *sdktrace.TracerProvider, appName string) Option {
+	return func(h *HTTPServer) {
+		// Enable Opentelemetry tracing by default
+		h.ginEngine.Use(otelgin.Middleware(appName))
+		h.tracer = tracer
+		otel.SetTracerProvider(h.tracer)
 	}
+}
+
+// WithTracer allows to set up OTEL tracer.
+// Example how to set it:
+//
+//	httpServer := httpserver.New(
+//		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),
+//		httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
+//	)
+func WithDefaultTracer(ctx context.Context, appName, collectorAddress string) Option {
+	return func(h *HTTPServer) {
+		h.ginEngine.Use(otelgin.Middleware(appName))
+		h.tracer = defaultTracer(ctx, appName, collectorAddress)
+		otel.SetTracerProvider(h.tracer)
+	}
+}
+
+func WithHTTPServer(httpServer *http.Server) Option {
+	return func(h *HTTPServer) {
+		h.httpServer = httpServer
+	}
+}
+
+func WithHTTPAddr(addr string) Option {
+	return func(h *HTTPServer) {
+		h.httpServer.Addr = addr
+	}
+}
+
+func WithCustomHealthCheckHandler(healthCheckHandler gin.HandlerFunc) Option {
+	return func(h *HTTPServer) {
+		h.ginEngine.GET("/health", healthCheckHandler)
+	}
+}
+
+// Initializing the server in a goroutine so that it won't block
+func (h *HTTPServer) Start() {
+	go func() {
+		if err := h.httpServer.ListenAndServe(); err != nil &&
+			errors.Is(err, http.ErrServerClosed) {
+			l.Logger.Error().Err(err).Msg("HTTP server closed")
+		}
+	}()
+}
+
+func (h *HTTPServer) Shutdown(ctx context.Context) {
+	// There's no constant for context cancellation in tracer's context, therefore use dynamically created error
+	if h.tracer != nil {
+		if err := h.tracer.Shutdown(ctx); err != nil &&
+			errors.Is(err, errors.New("context canceled")) {
+			l.Logger.Error().Err(err).Msg("Failed to shutdown opentelemetry tracer")
+		}
+	}
+
+	if err := h.httpServer.Shutdown(ctx); err != nil {
+		l.Logger.Fatal().Err(err).Msg("Forced shutdown")
+	}
+}
+
+func (h *HTTPServer) Handle(httpMethod, relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(httpMethod, relativePath, handlers...)
+}
+
+func (h *HTTPServer) POST(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodPost, relativePath, handlers...)
+}
+
+func (h *HTTPServer) GET(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodGet, relativePath, handlers...)
+}
+
+func (h *HTTPServer) DELETE(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodDelete, relativePath, handlers...)
+}
+
+func (h *HTTPServer) PATCH(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodPatch, relativePath, handlers...)
+}
+
+func (h *HTTPServer) PUT(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodPut, relativePath, handlers...)
+}
+
+func (h *HTTPServer) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodOptions, relativePath, handlers...)
+}
+
+func (h *HTTPServer) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Handle(http.MethodHead, relativePath, handlers...)
+}
+
+func (h *HTTPServer) Any(relativePath string, handlers ...gin.HandlerFunc) {
+	h.ginEngine.Any(relativePath, handlers...)
 }

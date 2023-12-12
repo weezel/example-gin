@@ -28,6 +28,8 @@ linters-settings:
     # Tab width in spaces.
     # Default: 1
     tab-width: 8
+  gosimple:
+    checks: ["all"]
   depguard:
     rules:
       main:

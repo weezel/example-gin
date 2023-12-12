@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,7 +17,6 @@ import (
 	l "weezel/example-gin/pkg/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.opentelemetry.io/otel"
 )
 
 // These will be filled in the build time by -X flag
@@ -57,56 +54,35 @@ func main() {
 	}
 
 	var dbConn *pgxpool.Pool
-	// This must be before httpserver.New() since that sets the database pointer to
-	// Gin context.
 	dbConn, err = postgres.New(ctx, cfg.Postgres)
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
+	defer dbConn.Close()
 	queries := sqlc.New(dbConn)
 
-	// Create a new HTTP engine and Opentelemetry Trace provider.
-	// Trace provider uses Gin's middleware so it's omnipresent.
-	engine, traceProvider := httpserver.New()
-	defer func() {
-		// There's no constant for context cancellation in
-		// tracer's context, therefore use dynamicly created error
-		if err = traceProvider.Shutdown(ctx); err != nil &&
-			errors.Is(err, errors.New("context canceled")) {
-			l.Logger.Error().Err(err).Msg("Failed to shutdown opentelemetry tracer")
-		}
-	}()
-	otel.SetTracerProvider(traceProvider)
+	httpServer := httpserver.New(
+		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),
+		httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
+	)
+	defer httpServer.Shutdown(ctx)
 
-	routes.AddRoutes(engine, queries)
-	srv := httpserver.Config(engine, cfg.HTTPServer)
-	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below
-	go func() {
-		if err = srv.ListenAndServe(); err != nil &&
-			errors.Is(err, http.ErrServerClosed) {
-			l.Logger.Error().Err(err).Msg("HTTP server closed")
-		}
-	}()
+	routes.AddRoutes(httpServer, queries)
 
-	if err != nil {
-		l.Logger.Error().Err(err).Msg("Failed to connect to database")
-	}
+	// Starts webserver on Goroutine.
+	httpServer.Start()
 
+	// Set signal handler for handling the graceful shutdown
 	sig := make(chan os.Signal, 1)
 	// React to SIGINT and SIGTERM only
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
-	l.Logger.Info().Msg("Shutting down the service")
+	recvSignal := <-sig
+	l.Logger.Info().Str("received_signal", recvSignal.String()).Msg("Performing a graceful shutdown")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Shutdown connections to database
-	dbConn.Close()
+	httpServer.Shutdown(ctx)
 
-	if err := srv.Shutdown(ctx); err != nil {
-		l.Logger.Fatal().Err(err).Msg("Forced shutdown")
-	}
-
-	l.Logger.Info().Msg("Service exiting")
+	l.Logger.Info().Msgf("Service %s exiting", os.Getenv("APP_NAME"))
 }
