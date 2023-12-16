@@ -15,8 +15,6 @@ import (
 	"weezel/example-gin/pkg/postgres"
 
 	l "weezel/example-gin/pkg/logger"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // These will be filled in the build time by -X flag
@@ -53,8 +51,15 @@ func main() {
 		l.Logger.Panic().Err(err).Msg("Failed to parse config")
 	}
 
-	var dbConn *pgxpool.Pool
-	dbConn, err = postgres.New(ctx, cfg.Postgres)
+	dbCtrl := postgres.New(
+		postgres.WithUsername(cfg.Postgres.Username),
+		postgres.WithPassword(cfg.Postgres.Password),
+		postgres.WithPort(cfg.Postgres.Port),
+		postgres.WithDBName(cfg.Postgres.DBName),
+		postgres.WithSSLMode(postgres.SSLModeDisable), // This is running on localhost only
+		postgres.WithApplicationName("example-gin"),
+	)
+	dbConn, err := dbCtrl.Connect(ctx)
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
