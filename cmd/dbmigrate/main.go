@@ -35,8 +35,6 @@ var schemasDir = "schemas"
 var sqlMigrations embed.FS
 
 func init() {
-	log.SetFlags(0)
-
 	var err error
 	wd, err = os.Getwd()
 	if err != nil {
