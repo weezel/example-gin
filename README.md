@@ -71,6 +71,5 @@ The newly added migration can be found under [sql/schemas/](sql/schemas/).
 
 ## TODO
 
-* Finalize integration tests
 * Create separate unprivileged API users for Postgres access
 * Add an example of proper database transaction cancellation with Golang's cancel
