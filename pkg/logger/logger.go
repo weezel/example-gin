@@ -49,6 +49,7 @@ func init() {
 	uniqID = randID()
 
 	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.DurationFieldUnit = time.Second
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	Logger = zerolog.New(os.Stdout).
 		Level(logLevel).
