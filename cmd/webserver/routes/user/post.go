@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	l "weezel/example-gin/pkg/logger"

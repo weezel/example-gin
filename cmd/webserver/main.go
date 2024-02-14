@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/generated/sqlc"

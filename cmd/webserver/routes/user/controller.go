@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 )
 

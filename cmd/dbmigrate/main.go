@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+
 	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/postgres"
 

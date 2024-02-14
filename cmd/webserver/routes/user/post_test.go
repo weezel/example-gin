@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
 	"weezel/example-gin/pkg/generated/sqlc"
 
 	"github.com/gin-gonic/gin"
