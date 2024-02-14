@@ -23,6 +23,7 @@
 		"-failfast",
 		"-short"
 	],
+	"go.useLanguageServer": true,
 	"gopls": {
 		"gofumpt": true,
 	},
