@@ -30,6 +30,8 @@ linters-settings:
     # Tab width in spaces.
     # Default: 1
     tab-width: 8
+  nestif:
+    min-complexity: 6
   gosimple:
     checks: ["all"]
   depguard:
@@ -61,14 +63,19 @@ linters:
     - govet # default
     - ineffassign # default
     - lll
+    - mirror
+    - nestif
     - nolintlint
     - revive
     - sqlclosecheck
     - staticcheck # default
+    - tparallel
     - typecheck # default
     - unconvert
     - unused # default
     - usestdlibvars
+    - whitespace
+    - zerologlint
 # issues:
 output:
   # Sort results by: filepath, line and column.

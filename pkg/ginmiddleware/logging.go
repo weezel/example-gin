@@ -60,12 +60,12 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 		var logEvent *zerolog.Event
 		if c.Writer.Status() >= 500 {
 			// Server failures are errors
-			logEvent = logger.Error()
+			logEvent = logger.Error() //nolint:zerologlint // Intentionally like this
 		} else if c.Writer.Status() >= 400 && c.Writer.Status() <= 499 {
 			// Client failures are warnings
-			logEvent = logger.Warn()
+			logEvent = logger.Warn() //nolint:zerologlint // Intentionally like this
 		} else {
-			logEvent = logger.Info()
+			logEvent = logger.Info() //nolint:zerologlint // Intentionally like this
 		}
 
 		logEvent.Str("uniq_id", l.UniqID()).

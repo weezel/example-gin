@@ -135,11 +135,11 @@ func TestHandlerController_DeleteHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			r := gin.Default()
 			tt.args.c = gin.CreateTestContextOnly(tt.recorder, r)
 			tt.args.c.Request = tt.request
-			r.DELETE("/user", func(c *gin.Context) {
+			r.DELETE("/user", func(_ *gin.Context) {
 				tt.args.c.Handler()(tt.args.c)
 			})
 			h := HandlerController{querier: tt.fields.querier}

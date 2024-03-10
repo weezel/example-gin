@@ -145,7 +145,7 @@ func TestHandlerController_IndexHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			// Hook up recorder to a new Gin context here
 			tt.args.c = gin.CreateTestContextOnly(tt.recorder, gin.Default())
 			h := HandlerController{querier: tt.fields.querier}
@@ -261,13 +261,13 @@ func TestHandlerController_GetHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			// Hook up recorder to a new Gin context here
 			r := gin.Default()
 			tt.args.c = gin.CreateTestContextOnly(tt.recorder, r)
 			tt.args.c.Request = tt.request
 			tt.args.c.Params = append(tt.args.c.Params, tt.param)
-			r.GET("/user/:name", func(c *gin.Context) {
+			r.GET("/user/:name", func(_ *gin.Context) {
 				tt.args.c.Handler()(tt.args.c)
 			})
 			h := HandlerController{querier: tt.fields.querier}
