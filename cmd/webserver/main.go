@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 	"time"
 
@@ -46,6 +47,20 @@ func main() {
 		Str("build_time", BuildTime).
 		Msg("Current build")
 
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		l.Logger.Fatal().Err(err).Msg("Couldn't create cpu.prof file")
+	}
+	defer func() {
+		if err = f.Close(); err != nil {
+			l.Logger.Error().Err(err).Msg("Failed to close cpu.prof file handle")
+		}
+	}()
+	if err = pprof.StartCPUProfile(f); err != nil {
+		l.Logger.Fatal().Err(err).Msg("Couldn't start CPU profile")
+	}
+	defer pprof.StopCPUProfile()
+
 	// Load config
 	cfg := config.Config{}
 	if err = cfg.Parse(); err != nil {
@@ -69,7 +84,7 @@ func main() {
 
 	httpServer := httpserver.New(
 		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),
-		httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
+		// httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
 	)
 	defer httpServer.Shutdown(ctx)
 
