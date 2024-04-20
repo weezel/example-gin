@@ -15,7 +15,6 @@ CGO_ENABLED	?= 0
 
 PSQL_CLIENT	?= psql
 PG_DUMP		?= pg_dump
-POSTGRES_VER	?= 14.4-alpine
 DB_HOST		?= $(shell awk -F '=' '/^DB_HOST/ { print $$NF }' .env)
 DB_PORT		?= $(shell awk -F '=' '/^DB_PORT/ { print $$NF }' .env)
 DB_NAME		?= $(shell awk -F '=' '/^DB_NAME/ { print $$NF }' .env)
