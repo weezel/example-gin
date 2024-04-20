@@ -55,6 +55,11 @@ vulncheck:
 escape-analysis:
 	$(GO) build -gcflags="-m" 2>&1
 
+# Easiest way to get proper profiler files:
+# make -B LDFLAGS=-cover build-all
+launch-profiler:
+	$(GO) tool pprof -http=: cpu.prof
+
 docker-build:
 	@DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) $(DOCKER) \
 			build --rm --target app -t $(APP_NAME)-build .
