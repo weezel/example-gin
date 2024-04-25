@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"time"
 
 	"weezel/example-gin/pkg/config"
@@ -64,7 +65,7 @@ func New(opts ...Option) *Controller {
 
 	ctrl.dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&application_name=%s",
 		ctrl.username,
-		ctrl.password,
+		url.QueryEscape(ctrl.password),
 		ctrl.hostname,
 		ctrl.port,
 		ctrl.dbName,
@@ -170,7 +171,7 @@ func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
 func NewMigrationConnection(cfg config.Postgres) (*sql.DB, error) {
 	psqlConfig := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
 		cfg.Username,
-		cfg.Password,
+		url.QueryEscape(cfg.Password),
 		cfg.Hostname,
 		cfg.Port,
 		cfg.DBName,
