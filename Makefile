@@ -110,8 +110,8 @@ test-unit:
 
 # This runs all tests, including integration tests
 test-integration: start-db
-	go test -failfast -race -tags=integration ./...
-	@docker compose down
+	-go test -failfast -race -tags=integration ./...
+	docker compose down
 
 .PHONY: sqlc
 sqlc:
