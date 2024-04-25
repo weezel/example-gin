@@ -14,6 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const (
+	emptyName = `{"error":"Name parameter empty or invalid"}`
+)
+
 func TestHandlerController_DeleteHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -96,10 +100,9 @@ func TestHandlerController_DeleteHandler(t *testing.T) {
 						recorder.Code, http.StatusBadRequest)
 				}
 
-				expectedBody := `{"error":"Name parameter empty or invalid"}`
 				responseBody := recorder.Body.String()
-				if responseBody != expectedBody {
-					t.Errorf("Response body differs, got=%s, want=%s", responseBody, expectedBody)
+				if responseBody != emptyName {
+					t.Errorf("Response body differs, got=%s, want=%s", responseBody, emptyName)
 				}
 			},
 			recorder: httptest.NewRecorder(),

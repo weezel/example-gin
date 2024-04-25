@@ -5,7 +5,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -35,14 +34,6 @@ var schemasDir = "schemas"
 //go:embed schemas/*.sql
 var sqlMigrations embed.FS
 
-func init() {
-	var err error
-	wd, err = os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func createDatabase(ctx context.Context, cfg config.Postgres) error {
 	// Intentionally use hardcoded postgres username and database here.
 	// For RDS username is the specially created admin user
@@ -57,7 +48,7 @@ func createDatabase(ctx context.Context, cfg config.Postgres) error {
 
 	_, err = dbConn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s OWNER postgres ENCODING UTF8", cfg.DBName))
 	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		return err
+		return fmt.Errorf("create db: %w", err)
 	}
 
 	return nil

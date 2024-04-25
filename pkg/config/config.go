@@ -17,7 +17,7 @@ type Postgres struct {
 }
 
 func (p *Postgres) Parse() error {
-	return env.Parse(p)
+	return env.Parse(p) //nolint:wrapcheck // It's okay in this case because we catch 'em soon
 }
 
 type HTTPServer struct {
@@ -26,7 +26,7 @@ type HTTPServer struct {
 }
 
 func (h *HTTPServer) Parse() error {
-	return env.Parse(h)
+	return env.Parse(h) //nolint:wrapcheck // It's okay in this case because we catch 'em soon
 }
 
 type Config struct {

@@ -44,9 +44,12 @@ linters:
     - dupl
     - durationcheck
     - errcheck # default
+    - errname
     - errorlint
     - exhaustive
     - exportloopref
+    - gochecknoinits
+    - goconst
     - gocritic
     - gofmt
     - gofumpt
@@ -59,15 +62,19 @@ linters:
     - mirror
     - nestif
     - nolintlint
+    - nosprintfhostport
+    - reassign
     - revive
     - sqlclosecheck
     - staticcheck # default
+    - tenv
     - tparallel
     - typecheck # default
     - unconvert
     - unused # default
     - usestdlibvars
     - whitespace
+    - wrapcheck
     - zerologlint
 # issues:
 output:

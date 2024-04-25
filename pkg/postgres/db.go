@@ -16,7 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrorDatabaseRetriesExceeded = errors.New("database retries exceeded")
+var ErrDatabaseRetriesExceeded = errors.New("database retries exceeded")
 
 type SSLModes string
 
@@ -63,6 +63,7 @@ func New(opts ...Option) *Controller {
 		opt(ctrl)
 	}
 
+	//nolint:nosprintfhostport // False positive, cannot use net.JoinHostPort() here
 	ctrl.dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&application_name=%s",
 		ctrl.username,
 		url.QueryEscape(ctrl.password),
@@ -157,7 +158,7 @@ func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
 
 		if retries > p.maxConnRetries {
 			return nil, fmt.Errorf("%w [%d/%d]",
-				ErrorDatabaseRetriesExceeded,
+				ErrDatabaseRetriesExceeded,
 				retries,
 				p.maxConnRetries,
 			)
@@ -169,6 +170,7 @@ func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
 
 // NewMigrationConnection opens a new connection for database migrations
 func NewMigrationConnection(cfg config.Postgres) (*sql.DB, error) {
+	//nolint:nosprintfhostport // False positive, cannot use net.JoinHostPort() here
 	psqlConfig := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
 		cfg.Username,
 		url.QueryEscape(cfg.Password),
@@ -190,5 +192,5 @@ func NewMigrationConnection(cfg config.Postgres) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
-	return dbConn, err
+	return dbConn, nil
 }

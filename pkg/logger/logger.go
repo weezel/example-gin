@@ -36,6 +36,7 @@ func isInteractive() bool {
 	return (fileInfo.Mode() & os.ModeCharDevice) != 0
 }
 
+//nolint:gochecknoinits // init() is allowed here to avoid needless calls in each package. Import should be eonugh.
 func init() {
 	var logLevel zerolog.Level
 	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
@@ -50,7 +51,7 @@ func init() {
 
 	zerolog.TimeFieldFormat = time.RFC3339
 	zerolog.DurationFieldUnit = time.Second
-	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack //nolint:reassign // From their own example snippet
 	Logger = zerolog.New(os.Stdout).
 		Level(logLevel).
 		With().
