@@ -133,20 +133,17 @@ func WithApplicationName(applicationName string) Option {
 }
 
 func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
-	dbPool, err := pgxpool.New(ctx, p.dbURL)
-	if err != nil {
-		return nil, fmt.Errorf("db connect: %w", err)
-	}
-
 	started := time.Now()
 	var retries uint
+	var err error
+	dbPool := &pgxpool.Pool{}
 	for {
-		if err = dbPool.Ping(ctx); err == nil {
-			break
+		dbPool, err = pgxpool.New(ctx, p.dbURL)
+		if err != nil {
+			l.Logger.Error().Err(err).Msg("Couldn't connect to DB")
 		}
 
-		dbPool, err = pgxpool.New(ctx, p.dbURL)
-		if err == nil {
+		if err = dbPool.Ping(ctx); err == nil {
 			break
 		}
 
