@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -68,7 +69,7 @@ func New(opts ...Option) *HTTPServer {
 		ginEngine: r,
 		httpServer: &http.Server{
 			ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
-			Addr:        ":8080",
+			Addr:        net.JoinHostPort("0.0.0.0", "8080"),
 			Handler:     r,
 		},
 	}
