@@ -6,7 +6,6 @@ import (
 	"github.com/caarlos0/env/v8"
 )
 
-// TODO Separation
 type Postgres struct {
 	Hostname string `env:"DB_HOST" envDefault:"localhost"`
 	Port     string `env:"DB_PORT" envDefault:"5432"`
