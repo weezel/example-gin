@@ -4,14 +4,20 @@ import (
 	"context"
 
 	"weezel/example-gin/pkg/generated/sqlc"
+
+	"github.com/gin-gonic/gin"
 )
 
 type HandlerController struct {
-	querier sqlc.Querier
+	querier         sqlc.Querier
+	userRouterGroup *gin.RouterGroup
 }
 
-func NewHandlerController(db sqlc.Querier) *HandlerController {
-	return &HandlerController{querier: db}
+func NewHandlerController(userRouterGroup *gin.RouterGroup, db sqlc.Querier) *HandlerController {
+	return &HandlerController{
+		userRouterGroup: userRouterGroup,
+		querier:         db,
+	}
 }
 
 // MockHandlerController introduces method calls that can be implemented on test case basis

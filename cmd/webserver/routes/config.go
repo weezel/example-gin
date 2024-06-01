@@ -8,11 +8,15 @@ import (
 
 // Add routes to our web server
 func AddRoutes(httpServer *httpserver.HTTPServer, queries *sqlc.Queries) {
-	ctrl := user.NewHandlerController(queries) // TODO
+	userRouterGroup := httpServer.NewRouterGroup("/user")
+	ctrl := user.NewHandlerController(
+		userRouterGroup,
+		queries,
+	)
 
 	// User related functionality
-	httpServer.GET("/user/", ctrl.IndexHandler)
-	httpServer.GET("/user/:name", ctrl.GetHandler)
-	httpServer.POST("/user", ctrl.PostHandler)
-	httpServer.DELETE("/user", ctrl.DeleteHandler)
+	userRouterGroup.GET("/", ctrl.IndexHandler)
+	userRouterGroup.GET(":name", ctrl.GetHandler)
+	userRouterGroup.POST("", ctrl.PostHandler)
+	userRouterGroup.DELETE("", ctrl.DeleteHandler)
 }

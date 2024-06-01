@@ -135,6 +135,7 @@ func WithCustomHealthCheckHandler(healthCheckHandler gin.HandlerFunc) Option {
 
 // Initializing the server in a goroutine so that it won't block
 func (h *HTTPServer) Start() {
+	l.Logger.Info().Msgf("Starting web server on %s", h.httpServer.Addr)
 	go func() {
 		if err := h.httpServer.ListenAndServe(); err != nil &&
 			errors.Is(err, http.ErrServerClosed) {
@@ -155,6 +156,10 @@ func (h *HTTPServer) Shutdown(ctx context.Context) {
 	if err := h.httpServer.Shutdown(ctx); err != nil {
 		l.Logger.Fatal().Err(err).Msg("Forced shutdown")
 	}
+}
+
+func (h *HTTPServer) NewRouterGroup(path string, handlers ...gin.HandlerFunc) *gin.RouterGroup {
+	return h.ginEngine.Group(path, handlers...)
 }
 
 func (h *HTTPServer) Handle(httpMethod, relativePath string, handlers ...gin.HandlerFunc) {
