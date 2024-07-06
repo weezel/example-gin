@@ -28,6 +28,11 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
+		// Process request before exiting.
+		// Must be done at this point or otherwise
+		// HTTP statuses will be logged incorrectly.
+		c.Next()
+
 		// Don't log on certain routes
 		for _, noLog := range routesNoLog {
 			if strings.HasSuffix(c.Request.RequestURI, noLog) {
@@ -76,8 +81,5 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 			Str("path", param.Path).
 			Str("latency", param.Latency.String()).
 			Msg(param.ErrorMessage)
-
-		// Process request before exiting
-		c.Next()
 	}
 }
