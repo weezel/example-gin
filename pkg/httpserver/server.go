@@ -49,48 +49,6 @@ func defaultTracer(ctx context.Context, serviceName, collectorAddress string) *s
 
 type Option func(*HTTPServer)
 
-type HTTPServer struct {
-	tracer     *sdktrace.TracerProvider
-	ginEngine  *gin.Engine
-	httpServer *http.Server
-}
-
-// New returns a new HTTP server with custom configurations, like structured logging middleware.
-// This is a general implementation that can be used in any server.
-// Leverages options pattern.
-func New(opts ...Option) *HTTPServer {
-	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	r := gin.New()
-	httpServer := &HTTPServer{
-		tracer:    nil,
-		ginEngine: r,
-		httpServer: &http.Server{
-			ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
-			Addr:        net.JoinHostPort("0.0.0.0", "8080"),
-			Handler:     r,
-		},
-	}
-
-	// Use our own logging middleware
-	r.Use(ginmiddleware.DefaultStructuredLogger())
-	// Set secure headers
-	r.Use(ginmiddleware.SecureHeaders())
-	// Don't log health checks
-	r.GET("/health", healthCheckHandler)
-
-	r.Use(gin.Recovery())
-
-	// Override defaults if any options are given
-	for _, opt := range opts {
-		opt(httpServer)
-	}
-
-	return httpServer
-}
-
 func WithTracer(tracer *sdktrace.TracerProvider, appName string) Option {
 	return func(h *HTTPServer) {
 		// Enable Opentelemetry tracing by default
@@ -131,6 +89,48 @@ func WithCustomHealthCheckHandler(healthCheckHandler gin.HandlerFunc) Option {
 	return func(h *HTTPServer) {
 		h.ginEngine.GET("/health", healthCheckHandler)
 	}
+}
+
+type HTTPServer struct {
+	tracer     *sdktrace.TracerProvider
+	ginEngine  *gin.Engine
+	httpServer *http.Server
+}
+
+// New returns a new HTTP server with custom configurations, like structured logging middleware.
+// This is a general implementation that can be used in any server.
+// Leverages options pattern.
+func New(opts ...Option) *HTTPServer {
+	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r := gin.New()
+	httpServer := &HTTPServer{
+		tracer:    nil,
+		ginEngine: r,
+		httpServer: &http.Server{
+			ReadTimeout: 60 * time.Second, // Mitigation against Slow loris attack (value from nginx)
+			Addr:        net.JoinHostPort("0.0.0.0", "8080"),
+			Handler:     r,
+		},
+	}
+
+	// Use our own logging middleware
+	r.Use(ginmiddleware.DefaultStructuredLogger())
+	// Set secure headers
+	r.Use(ginmiddleware.SecureHeaders())
+	// Don't log health checks
+	r.GET("/health", healthCheckHandler)
+
+	r.Use(gin.Recovery())
+
+	// Override defaults if any options are given
+	for _, opt := range opts {
+		opt(httpServer)
+	}
+
+	return httpServer
 }
 
 // Initializing the server in a goroutine so that it won't block
