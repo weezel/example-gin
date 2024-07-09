@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"runtime/pprof"
 	"syscall"
-	"time"
 
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
@@ -99,9 +98,6 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	recvSignal := <-sig
 	l.Logger.Info().Str("received_signal", recvSignal.String()).Msg("Performing a graceful shutdown")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	httpServer.Shutdown(ctx)
 

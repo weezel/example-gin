@@ -138,22 +138,28 @@ func (h *HTTPServer) Start() {
 	l.Logger.Info().Msgf("Starting web server on %s", h.httpServer.Addr)
 	go func() {
 		if err := h.httpServer.ListenAndServe(); err != nil &&
-			errors.Is(err, http.ErrServerClosed) {
+			!errors.Is(err, http.ErrServerClosed) {
 			l.Logger.Error().Err(err).Msg("HTTP server closed")
 		}
 	}()
 }
 
 func (h *HTTPServer) Shutdown(ctx context.Context) {
+	timeout := 5 * time.Second
+	cCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	l.Logger.Info().Msgf("Closing HTTP server with %s timeout", timeout)
+
 	// There's no constant for context cancellation in tracer's context, therefore use dynamically created error
 	if h.tracer != nil {
-		if err := h.tracer.Shutdown(ctx); err != nil &&
+		if err := h.tracer.Shutdown(cCtx); err != nil &&
 			errors.Is(err, errors.New("context canceled")) {
 			l.Logger.Error().Err(err).Msg("Failed to shutdown opentelemetry tracer")
 		}
 	}
 
-	if err := h.httpServer.Shutdown(ctx); err != nil {
+	if err := h.httpServer.Shutdown(cCtx); err != nil {
 		l.Logger.Fatal().Err(err).Msg("Forced shutdown")
 	}
 }
