@@ -74,12 +74,12 @@ func main() {
 		postgres.WithSSLMode(postgres.SSLModeDisable), // This is running on localhost only
 		postgres.WithApplicationName("example-gin"),
 	)
-	dbConn, err := dbCtrl.Connect(ctx)
+	err = dbCtrl.Connect(ctx)
 	if err != nil {
 		l.Logger.Fatal().Err(err).Msg("Database connection failed")
 	}
-	defer dbConn.Close()
-	queries := sqlc.New(dbConn)
+	defer dbCtrl.Close(ctx)
+	queries := sqlc.New(dbCtrl.Pool())
 
 	httpServer := httpserver.New(
 		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),

@@ -34,6 +34,7 @@ type Contollerer interface {
 }
 
 type Controller struct {
+	pool            *pgxpool.Pool
 	username        string
 	password        string
 	hostname        string
@@ -134,18 +135,31 @@ func WithApplicationName(applicationName string) Option {
 	}
 }
 
-func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
+func (c *Controller) Close(ctx context.Context) {
+	timeout := 5 * time.Second
+	_, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	l.Logger.Info().Msgf("Closing database connections with %s timeout", timeout)
+
+	c.pool.Close()
+}
+
+func (c *Controller) Pool() *pgxpool.Pool {
+	return c.pool
+}
+
+func (c *Controller) Connect(ctx context.Context) error {
 	started := time.Now()
 	var retries uint
 	var err error
-	dbPool := &pgxpool.Pool{}
 	for {
-		dbPool, err = pgxpool.New(ctx, p.dbURL)
+		c.pool, err = pgxpool.New(ctx, c.dbURL)
 		if err != nil {
 			l.Logger.Error().Err(err).Msg("Couldn't connect to DB")
 		}
 
-		if err = dbPool.Ping(ctx); err == nil {
+		if err = c.pool.Ping(ctx); err == nil {
 			break
 		}
 
@@ -154,18 +168,18 @@ func (p *Controller) Connect(ctx context.Context) (*pgxpool.Pool, error) {
 		retries++
 
 		l.Logger.Warn().Msgf("Retrying db connection %d/%d (%s since started)",
-			retries, p.maxConnRetries, time.Since(started))
+			retries, c.maxConnRetries, time.Since(started))
 
-		if retries > p.maxConnRetries {
-			return nil, fmt.Errorf("%w [%d/%d]",
+		if retries > c.maxConnRetries {
+			return fmt.Errorf("%w [%d/%d]",
 				ErrDatabaseRetriesExceeded,
 				retries,
-				p.maxConnRetries,
+				c.maxConnRetries,
 			)
 		}
 	}
 
-	return dbPool, nil
+	return nil
 }
 
 // NewMigrationConnection opens a new connection for database migrations
