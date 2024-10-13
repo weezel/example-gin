@@ -100,7 +100,7 @@ type HTTPServer struct {
 // New returns a new HTTP server with custom configurations, like structured logging middleware.
 // This is a general implementation that can be used in any server.
 // Leverages options pattern.
-func New(opts ...Option) *HTTPServer {
+func New(ctx context.Context, opts ...Option) *HTTPServer {
 	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -120,6 +120,9 @@ func New(opts ...Option) *HTTPServer {
 	r.Use(ginmiddleware.DefaultStructuredLogger())
 	// Set secure headers
 	r.Use(ginmiddleware.SecureHeaders())
+	// Store global context
+	r.Use(ginmiddleware.ContextMiddleware(ctx))
+
 	// Don't log health checks
 	r.GET("/health", healthCheckHandler)
 

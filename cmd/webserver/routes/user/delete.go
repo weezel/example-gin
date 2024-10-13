@@ -14,6 +14,11 @@ import (
 
 func (h HandlerController) DeleteHandler(c *gin.Context) {
 	ctx := context.Background()
+	value, exists := c.Get("ctx")
+	if exists {
+		ctx = value.(context.Context)
+	}
+
 	var err error
 
 	var usr User

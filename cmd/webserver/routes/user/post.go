@@ -17,8 +17,12 @@ import (
 // PostHandler adds an user into a database
 func (h HandlerController) PostHandler(c *gin.Context) {
 	ctx := context.Background()
-	var err error
+	value, exists := c.Get("ctx")
+	if exists {
+		ctx = value.(context.Context)
+	}
 
+	var err error
 	var usr User
 	if err = c.ShouldBindJSON(&usr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

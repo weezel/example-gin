@@ -11,6 +11,10 @@ import (
 
 func (h HandlerController) IndexHandler(c *gin.Context) {
 	ctx := context.Background()
+	value, exists := c.Get("ctx")
+	if exists {
+		ctx = value.(context.Context)
+	}
 
 	l.Logger.Info().Msg("Listing all users")
 
