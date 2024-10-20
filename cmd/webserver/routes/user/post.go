@@ -3,7 +3,6 @@ package user
 // This is intentionally equal to adding user.
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -16,11 +15,7 @@ import (
 
 // PostHandler adds an user into a database
 func (h HandlerController) PostHandler(c *gin.Context) {
-	ctx := context.Background()
-	value, exists := c.Get("ctx")
-	if exists {
-		ctx = value.(context.Context)
-	}
+	ctx := c.Request.Context()
 
 	var err error
 	var usr User

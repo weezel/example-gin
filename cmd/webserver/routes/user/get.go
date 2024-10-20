@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"net/http"
 
 	l "weezel/example-gin/pkg/logger"
@@ -10,11 +9,7 @@ import (
 )
 
 func (h HandlerController) IndexHandler(c *gin.Context) {
-	ctx := context.Background()
-	value, exists := c.Get("ctx")
-	if exists {
-		ctx = value.(context.Context)
-	}
+	ctx := c.Request.Context()
 
 	l.Logger.Info().Msg("Listing all users")
 
@@ -34,7 +29,7 @@ func (h HandlerController) IndexHandler(c *gin.Context) {
 }
 
 func (h HandlerController) GetHandler(c *gin.Context) {
-	ctx := context.Background()
+	ctx := c.Request.Context()
 
 	name := c.Param("name")
 	l.Logger.Info().

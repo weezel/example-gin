@@ -3,7 +3,6 @@ package user
 // This is intentionally equal to deleting user.
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -13,11 +12,7 @@ import (
 )
 
 func (h HandlerController) DeleteHandler(c *gin.Context) {
-	ctx := context.Background()
-	value, exists := c.Get("ctx")
-	if exists {
-		ctx = value.(context.Context)
-	}
+	ctx := c.Request.Context()
 
 	var err error
 

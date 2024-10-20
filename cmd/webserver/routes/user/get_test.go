@@ -146,9 +146,10 @@ func TestHandlerController_IndexHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(_ *testing.T) {
-			// Hook up recorder to a new Gin context here
 			tt.args.c = gin.CreateTestContextOnly(tt.recorder, gin.Default())
 			h := HandlerController{querier: tt.fields.querier}
+			req, _ := http.NewRequest(http.MethodGet, "/", nil)
+			tt.args.c.Request = req
 			h.IndexHandler(tt.args.c)
 			tt.postCheck(tt.recorder)
 		})
