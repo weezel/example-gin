@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 	"time"
 
 	"weezel/example-gin/pkg/config"
 
 	l "weezel/example-gin/pkg/logger"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -157,6 +159,11 @@ func (c *Controller) Connect(ctx context.Context) error {
 		c.pool, err = pgxpool.New(ctx, c.dbURL)
 		if err != nil {
 			l.Logger.Error().Err(err).Msg("Couldn't connect to DB")
+		}
+
+		// If there's a "proxy" in connection string, use QueryExecMode to avoid surprises
+		if strings.Contains(strings.ToLower(c.pool.Config().ConnString()), "proxy") {
+			c.pool.Config().ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
 		}
 
 		if err = c.pool.Ping(ctx); err == nil {
