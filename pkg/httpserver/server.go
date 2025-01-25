@@ -79,9 +79,9 @@ func WithHTTPServer(httpServer *http.Server) Option {
 	}
 }
 
-func WithHTTPAddr(addr string) Option {
+func WithHTTPAddr(host, port string) Option {
 	return func(h *HTTPServer) {
-		h.httpServer.Addr = addr
+		h.httpServer.Addr = net.JoinHostPort(host, port)
 	}
 }
 

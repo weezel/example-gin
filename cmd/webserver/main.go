@@ -82,7 +82,7 @@ func main() {
 	queries := sqlc.New(dbCtrl.Pool())
 
 	httpServer := httpserver.New(
-		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),
+		httpserver.WithHTTPAddr(cfg.HTTPServer.Hostname, cfg.HTTPServer.Port),
 		// httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
 	)
 	defer httpServer.Shutdown(ctx)
