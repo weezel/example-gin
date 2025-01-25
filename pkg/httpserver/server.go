@@ -17,59 +17,58 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
-
-func defaultTracer(ctx context.Context, serviceName, collectorAddress string) *sdktrace.TracerProvider {
-	// Create the Jaeger exporter
-	// exporter, err := otlptracehttp.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
-	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint(collectorAddress))
-	if err != nil {
-		l.Logger.Fatal().Err(err).Msg("Failed to setup tracer")
-	}
-
-	// For the demonstration, use sdktrace.AlwaysSample sampler to sample all traces.
-	// In a production application, use sdktrace.ProbabilitySampler with a desired probability.
-	tp := sdktrace.NewTracerProvider(
-		// Always be sure to batch in production.
-		sdktrace.WithBatcher(exporter),
-		// Record information about this application in a Resource.
-		sdktrace.WithResource(
-			resource.NewWithAttributes(
-				semconv.SchemaURL,
-				semconv.ServiceName(fmt.Sprintf("%s_%s", serviceName, l.UniqID())),
-			),
-		),
-	)
-	return tp
-}
 
 type Option func(*HTTPServer)
 
 func WithTracer(tracer *sdktrace.TracerProvider, appName string) Option {
 	return func(h *HTTPServer) {
-		// Enable Opentelemetry tracing by default
 		h.ginEngine.Use(otelgin.Middleware(appName))
 		h.tracer = tracer
 		otel.SetTracerProvider(h.tracer)
 	}
 }
 
-// WithTracer allows to set up OTEL tracer.
-// Example how to set it:
-//
-//	httpServer := httpserver.New(
-//		httpserver.WithHTTPAddr(fmt.Sprintf("%s:%s", cfg.HTTPServer.Hostname, cfg.HTTPServer.Port)),
-//		httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
-//	)
-func WithDefaultTracer(ctx context.Context, appName, collectorAddress string) Option {
+func WithDefaultTracer(
+	ctx context.Context,
+	appName string,
+	collectorHost string,
+	collectorPort string,
+) Option {
 	return func(h *HTTPServer) {
-		h.ginEngine.Use(otelgin.Middleware(appName))
-		h.tracer = defaultTracer(ctx, appName, collectorAddress)
-		otel.SetTracerProvider(h.tracer)
+		serviceName := semconv.ServiceNameKey.String(fmt.Sprintf("%s_%s", appName, l.UniqID()))
+
+		conn, err := grpc.NewClient(
+			net.JoinHostPort(collectorHost, collectorPort),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			l.Logger.Fatal().Err(err).Msg("Failed to create gRPC connection to collector")
+		}
+
+		res, err := resource.New(ctx, resource.WithAttributes(serviceName))
+		if err != nil {
+			l.Logger.Fatal().Err(err).Msg("Couldn't create a new tracing resource")
+		}
+
+		if err := h.defaultTracerProvider(ctx, res, conn); err != nil {
+			l.Logger.Fatal().Err(err).Msg("Couldn't create tracing provider")
+		}
+
+		if err := h.defaultMeterProvider(ctx, res, conn); err != nil {
+			l.Logger.Fatal().Err(err).Msg("Couldn't create metrics provider")
+		}
+
+		h.ginEngine.Use(otelgin.Middleware(appName, otelgin.WithTracerProvider(h.tracer)))
 	}
 }
 
@@ -93,6 +92,7 @@ func WithCustomHealthCheckHandler(healthCheckHandler gin.HandlerFunc) Option {
 
 type HTTPServer struct {
 	tracer     *sdktrace.TracerProvider
+	metrics    *sdkmetric.MeterProvider
 	ginEngine  *gin.Engine
 	httpServer *http.Server
 }
@@ -104,6 +104,9 @@ func New(opts ...Option) *HTTPServer {
 	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	// ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	// defer cancel()
 
 	r := gin.New()
 	httpServer := &HTTPServer{
@@ -203,4 +206,50 @@ func (h *HTTPServer) HEAD(relativePath string, handlers ...gin.HandlerFunc) {
 
 func (h *HTTPServer) Any(relativePath string, handlers ...gin.HandlerFunc) {
 	h.ginEngine.Any(relativePath, handlers...)
+}
+
+func (h *HTTPServer) defaultTracerProvider(
+	ctx context.Context,
+	res *resource.Resource,
+	conn *grpc.ClientConn,
+) error {
+	// Set up a trace exporter
+	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	if err != nil {
+		return fmt.Errorf("trace exporter: %w", err)
+	}
+
+	// Register the trace exporter with a TracerProvider, using a batch
+	// span processor to aggregate spans before export.
+	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+	h.tracer = sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithResource(res),
+		sdktrace.WithSpanProcessor(bsp),
+	)
+	otel.SetTracerProvider(h.tracer)
+
+	// Set global propagator to tracecontext (the default is no-op).
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	return nil
+}
+
+func (h *HTTPServer) defaultMeterProvider(
+	ctx context.Context,
+	res *resource.Resource,
+	conn *grpc.ClientConn,
+) error {
+	metricExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn))
+	if err != nil {
+		return fmt.Errorf("metrics exporter: %w", err)
+	}
+
+	h.metrics = sdkmetric.NewMeterProvider(
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
+		sdkmetric.WithResource(res),
+	)
+	otel.SetMeterProvider(h.metrics)
+
+	return nil
 }

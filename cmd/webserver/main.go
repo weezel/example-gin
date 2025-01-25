@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"flag"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 )
+
+var serviceName = cmp.Or(os.Getenv("SERVICE_NAME"), "example-gin")
 
 // These will be filled in the build time by -X flag
 var (
@@ -72,7 +75,7 @@ func main() {
 		postgres.WithPort(cfg.Postgres.Port),
 		postgres.WithDBName(cfg.Postgres.DBName),
 		postgres.WithSSLMode(postgres.SSLModeDisable), // This is running on localhost only
-		postgres.WithApplicationName("example-gin"),
+		postgres.WithApplicationName(serviceName),
 	)
 	err = dbCtrl.Connect(ctx)
 	if err != nil {
@@ -83,7 +86,7 @@ func main() {
 
 	httpServer := httpserver.New(
 		httpserver.WithHTTPAddr(cfg.HTTPServer.Hostname, cfg.HTTPServer.Port),
-		// httpserver.WithDefaultTracer(ctx, "example-gin", os.Getenv("COLLECTOR_ADDR")),
+		httpserver.WithDefaultTracer(ctx, serviceName, "localhost", "4317"),
 	)
 	defer httpServer.Shutdown(ctx)
 

@@ -11,12 +11,22 @@ services:
     #volumes:
     #  - "$PWD/postgres-data:/var/lib/postgresql/data:rw"
 
-  jaeger:
-    image: jaegertracing/all-in-one:latest
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml
     ports:
-     - "127.0.0.1:14250:14250"
-     - "127.0.0.1:14268:14268"
-     - "127.0.0.1:16686:16686"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - LOG_LEVEL=debug
+      - 4317:4317
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    ports:
+      - 16686:16686
