@@ -139,11 +139,17 @@ func WithApplicationName(applicationName string) Option {
 
 func (c *Controller) Close(ctx context.Context) {
 	timeout := 5 * time.Second
-	_, cancel := context.WithTimeout(ctx, timeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	l.Logger.Info().Msgf("Closing database connections with %s timeout", timeout)
 
+	// If there are still acquired connections, close them.
+	// Otherwise pool.Close() will wait until the timeouts are reached.
+	idleConns := c.pool.AcquireAllIdle(timeoutCtx)
+	for _, conn := range idleConns {
+		conn.Release()
+	}
 	c.pool.Close()
 }
 
