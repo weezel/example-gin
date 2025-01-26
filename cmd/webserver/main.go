@@ -15,6 +15,7 @@ import (
 	"weezel/example-gin/pkg/generated/sqlc"
 	"weezel/example-gin/pkg/httpserver"
 	"weezel/example-gin/pkg/postgres"
+	"weezel/example-gin/pkg/tracer"
 
 	l "weezel/example-gin/pkg/logger"
 )
@@ -69,6 +70,20 @@ func main() {
 		l.Logger.Panic().Err(err).Msg("Failed to parse config")
 	}
 
+	otelTracerMetrics := tracer.NewOtelTracerMetrics(
+		ctx,
+		serviceName,
+		"localhost",
+		"4317",
+		tracer.OtelTracingEnabled|tracer.OtelMetricsEnabled,
+	)
+	if err := otelTracerMetrics.Connect(ctx); err != nil {
+		l.Logger.Panic().Err(err).Msg("OTEL client connection failed")
+	}
+	defer func() {
+		otelTracerMetrics.Close(ctx)
+	}()
+
 	dbCtrl := postgres.New(
 		postgres.WithUsername(cfg.Postgres.Username),
 		postgres.WithPassword(cfg.Postgres.Password),
@@ -86,7 +101,7 @@ func main() {
 
 	httpServer := httpserver.New(
 		httpserver.WithHTTPAddr(cfg.HTTPServer.Hostname, cfg.HTTPServer.Port),
-		httpserver.WithDefaultTracer(ctx, serviceName, "localhost", "4317"),
+		httpserver.WithDefaultTracer(serviceName),
 	)
 	defer httpServer.Shutdown(ctx)
 
