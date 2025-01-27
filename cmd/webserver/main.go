@@ -30,14 +30,29 @@ var (
 
 // Flags
 var (
-	showVersion bool
+	showVersion     bool
+	enableProfiling bool
 )
+
+func profiling() (*os.File, func()) {
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		l.Logger.Panic().Err(err).Msg("Couldn't create cpu.prof file")
+	}
+
+	if err = pprof.StartCPUProfile(f); err != nil {
+		l.Logger.Panic().Err(err).Msg("Couldn't start CPU profile")
+	}
+
+	return f, pprof.StopCPUProfile
+}
 
 func main() {
 	ctx := context.Background()
 	var err error
 
 	flag.BoolVar(&showVersion, "v", false, "Show version and build time")
+	flag.BoolVar(&enableProfiling, "p", false, "Enable run time profiling")
 	flag.Parse()
 
 	if showVersion {
@@ -50,19 +65,15 @@ func main() {
 		Str("build_time", BuildTime).
 		Msg("Current build")
 
-	f, err := os.Create("cpu.prof")
-	if err != nil {
-		l.Logger.Fatal().Err(err).Msg("Couldn't create cpu.prof file")
+	if enableProfiling {
+		profFHandle, profilingClose := profiling()
+		defer profilingClose()
+		defer func() {
+			if err = profFHandle.Close(); err != nil {
+				l.Logger.Error().Err(err).Msg("Failed to close cpu.prof file handle")
+			}
+		}()
 	}
-	defer func() {
-		if err = f.Close(); err != nil {
-			l.Logger.Error().Err(err).Msg("Failed to close cpu.prof file handle")
-		}
-	}()
-	if err = pprof.StartCPUProfile(f); err != nil {
-		l.Logger.Fatal().Err(err).Msg("Couldn't start CPU profile")
-	}
-	defer pprof.StopCPUProfile()
 
 	// Load config
 	cfg := config.Config{}
