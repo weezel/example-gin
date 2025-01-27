@@ -37,15 +37,14 @@ type Contollerer interface {
 }
 
 type Controller struct {
-	pool            *pgxpool.Pool
-	config          *pgxpool.Config
-	applicationName string
-	maxConnRetries  uint
+	pool           *pgxpool.Pool
+	config         *pgxpool.Config
+	maxConnRetries uint
 }
 
 type Option func(*Controller)
 
-func New(ctx context.Context, cfg config.Postgres, appName string, opts ...Option) *Controller {
+func New(cfg config.Postgres, appName string, opts ...Option) *Controller {
 	switch cfg.TLS {
 	case string(SSLModeDisable),
 		string(SSLModeAllow),
@@ -59,6 +58,7 @@ func New(ctx context.Context, cfg config.Postgres, appName string, opts ...Optio
 		l.Logger.Panic().Err(err).Msg("Unsupported SSL mode given")
 	}
 
+	//nolint:nosprintfhostport // False positive, this isn't a regular hostname:port syntax here
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
 		cfg.Username,
 		url.QueryEscape(cfg.Password),
@@ -74,9 +74,9 @@ func New(ctx context.Context, cfg config.Postgres, appName string, opts ...Optio
 	}
 
 	ctrl := &Controller{config: dbConfig}
-	ctrl.config.MaxConnLifetime = time.Duration(10 * time.Minute)
-	ctrl.config.MaxConnIdleTime = time.Duration(10 * time.Second)
-	ctrl.config.HealthCheckPeriod = time.Duration(30 * time.Second)
+	ctrl.config.MaxConnLifetime = 10 * time.Minute
+	ctrl.config.MaxConnIdleTime = 10 * time.Second
+	ctrl.config.HealthCheckPeriod = 30 * time.Second
 	ctrl.config.MaxConns = 5
 	ctrl.config.MinConns = 1
 

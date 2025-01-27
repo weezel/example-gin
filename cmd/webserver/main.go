@@ -88,7 +88,7 @@ func main() {
 		"4317",
 		tracer.OtelTracingEnabled|tracer.OtelMetricsEnabled,
 	)
-	if err := otelTracerMetrics.Connect(ctx); err != nil {
+	if err = otelTracerMetrics.Connect(ctx); err != nil {
 		l.Logger.Panic().Err(err).Msg("OTEL client connection failed")
 	}
 	defer func() {
@@ -96,7 +96,6 @@ func main() {
 	}()
 
 	dbCtrl := postgres.New(
-		ctx,
 		cfg.Postgres,
 		serviceName,
 		postgres.WithTelemetryEnabled(),
