@@ -20,6 +20,9 @@ Example logging with Zerolog middleware hooked to Gin Gonic:
 {"level":"info","client_ip":"127.0.0.1","uniq_id":"a05830c0","method":"GET","status_code":200,"body_size":23,"path":"/get/asdf","latency":"6.185µs","time":"2022-12-18T23:03:33+02:00"}
 ```
 
+Example screenshot of OTEL tracing captured and shown in Jeager UI:
+![OTEL Tracing](otel_tracing.png)
+
 ## Prerequisites
 
 * [Docker](https://docker-docs.netlify.app/install/) acting as a local development database and for integration tests.
