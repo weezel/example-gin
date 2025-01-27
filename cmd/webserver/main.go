@@ -103,7 +103,7 @@ func main() {
 	)
 	err = dbCtrl.Connect(ctx)
 	if err != nil {
-		l.Logger.Fatal().Err(err).Msg("Database connection failed")
+		l.Logger.Panic().Err(err).Msg("Database connection failed")
 	}
 	defer dbCtrl.Close(ctx)
 	queries := sqlc.New(dbCtrl.Pool())

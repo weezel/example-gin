@@ -107,7 +107,7 @@ func (h *HTTPServer) Shutdown(ctx context.Context) {
 	l.Logger.Info().Msgf("Closing HTTP server with %s timeout", timeout)
 
 	if err := h.httpServer.Shutdown(cCtx); err != nil {
-		l.Logger.Fatal().Err(err).Msg("Forced shutdown")
+		l.Logger.Panic().Err(err).Msg("Forced shutdown")
 	}
 }
 

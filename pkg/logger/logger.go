@@ -33,7 +33,7 @@ func init() {
 
 	startDir, err := os.Getwd()
 	if err != nil {
-		Logger.Fatal().Err(err).Msg("Failed to get working directory")
+		Logger.Panic().Err(err).Msg("Failed to get working directory")
 	}
 
 	gitRoot, err := findGitRootDir(startDir)
