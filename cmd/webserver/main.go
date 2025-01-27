@@ -85,12 +85,10 @@ func main() {
 	}()
 
 	dbCtrl := postgres.New(
-		postgres.WithUsername(cfg.Postgres.Username),
-		postgres.WithPassword(cfg.Postgres.Password),
-		postgres.WithPort(cfg.Postgres.Port),
-		postgres.WithDBName(cfg.Postgres.DBName),
-		postgres.WithSSLMode(postgres.SSLModeDisable), // This is running on localhost only
-		postgres.WithApplicationName(serviceName),
+		ctx,
+		cfg.Postgres,
+		serviceName,
+		postgres.WithTelemetryEnabled(),
 	)
 	err = dbCtrl.Connect(ctx)
 	if err != nil {

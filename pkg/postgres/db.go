@@ -14,6 +14,7 @@ import (
 
 	l "weezel/example-gin/pkg/logger"
 
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -37,103 +38,70 @@ type Contollerer interface {
 
 type Controller struct {
 	pool            *pgxpool.Pool
-	username        string
-	password        string
-	hostname        string
-	port            string
-	dbName          string
+	config          *pgxpool.Config
 	applicationName string
-	dbURL           string
-	sslMode         SSLModes
-	poolMaxConns    uint
 	maxConnRetries  uint
 }
 
 type Option func(*Controller)
 
-func New(opts ...Option) *Controller {
-	ctrl := &Controller{
-		port:           "5432",
-		maxConnRetries: 5,
-		poolMaxConns:   5,
-		username:       "postgres",
-		hostname:       "localhost",
-		dbName:         "postgres",
-		sslMode:        SSLModePrefer,
+func New(ctx context.Context, cfg config.Postgres, appName string, opts ...Option) *Controller {
+	switch cfg.TLS {
+	case string(SSLModeDisable),
+		string(SSLModeAllow),
+		string(SSLModePrefer),
+		string(SSLModeRequire),
+		string(SSLModeVerifyCA),
+		string(SSLModeVerifyFull):
+		break
+	default:
+		err := fmt.Errorf("invalid SSLMode: %s", cfg.TLS)
+		l.Logger.Panic().Err(err).Msg("Unsupported SSL mode given")
 	}
 
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
+		cfg.Username,
+		url.QueryEscape(cfg.Password),
+		cfg.Hostname,
+		cfg.Port,
+		cfg.DBName,
+		cfg.TLS,
+		appName,
+	)
+	dbConfig, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		l.Logger.Panic().Err(err).Msg("Cannot parse database config")
+	}
+
+	ctrl := &Controller{config: dbConfig}
+	ctrl.config.MaxConnLifetime = time.Duration(10 * time.Minute)
+	ctrl.config.MaxConnIdleTime = time.Duration(10 * time.Second)
+	ctrl.config.HealthCheckPeriod = time.Duration(30 * time.Second)
+	ctrl.config.MaxConns = 5
+	ctrl.config.MinConns = 1
+
+	// Override defaults
 	for _, opt := range opts {
 		opt(ctrl)
 	}
 
-	//nolint:nosprintfhostport // False positive, cannot use net.JoinHostPort() here
-	ctrl.dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&application_name=%s",
-		ctrl.username,
-		url.QueryEscape(ctrl.password),
-		ctrl.hostname,
-		ctrl.port,
-		ctrl.dbName,
-		ctrl.sslMode,
-		ctrl.poolMaxConns,
-		ctrl.applicationName,
-	)
+	// If there's a "proxy" in hostname, use QueryExecMode to avoid surprises
+	if strings.Contains(strings.ToLower(cfg.Hostname), "proxy") {
+		ctrl.config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
+	}
 
 	return ctrl
 }
 
-func WithUsername(username string) Option {
+func WithTelemetryEnabled() Option {
 	return func(pc *Controller) {
-		pc.username = username
+		pc.config.ConnConfig.Tracer = otelpgx.NewTracer(otelpgx.WithIncludeQueryParameters())
 	}
 }
 
-func WithPassword(password string) Option {
+func WithPoolMaxConns(poolMaxConns int32) Option {
 	return func(pc *Controller) {
-		pc.password = password
-	}
-}
-
-func WithHostname(hostname string) Option {
-	return func(pc *Controller) {
-		pc.hostname = hostname
-	}
-}
-
-func WithPort(port string) Option {
-	return func(pc *Controller) {
-		pc.port = port
-	}
-}
-
-func WithDBName(dbName string) Option {
-	return func(pc *Controller) {
-		pc.dbName = dbName
-	}
-}
-
-func WithSSLMode(sslMode SSLModes) Option {
-	switch sslMode {
-	case SSLModeDisable, SSLModeAllow, SSLModePrefer, SSLModeRequire, SSLModeVerifyCA, SSLModeVerifyFull:
-		break
-	default:
-		err := fmt.Errorf("invalid SSLMode: %s", sslMode)
-		l.Logger.Fatal().Err(err).Msg("Unsupported SSL mode given")
-	}
-
-	return func(pc *Controller) {
-		pc.sslMode = sslMode
-	}
-}
-
-func WithPoolMaxConns(poolMaxConns uint) Option {
-	return func(pc *Controller) {
-		pc.poolMaxConns = poolMaxConns
-	}
-}
-
-func WithApplicationName(applicationName string) Option {
-	return func(pc *Controller) {
-		pc.applicationName = applicationName
+		pc.config.MaxConns = poolMaxConns
 	}
 }
 
@@ -162,14 +130,9 @@ func (c *Controller) Connect(ctx context.Context) error {
 	var retries uint
 	var err error
 	for {
-		c.pool, err = pgxpool.New(ctx, c.dbURL)
+		c.pool, err = pgxpool.NewWithConfig(ctx, c.config)
 		if err != nil {
-			l.Logger.Error().Err(err).Msg("Couldn't connect to DB")
-		}
-
-		// If there's a "proxy" in connection string, use QueryExecMode to avoid surprises
-		if strings.Contains(strings.ToLower(c.pool.Config().ConnString()), "proxy") {
-			c.pool.Config().ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
+			l.Logger.Error().Err(err).Msg("Couldn't connect to database")
 		}
 
 		if err = c.pool.Ping(ctx); err == nil {
