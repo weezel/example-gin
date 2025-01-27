@@ -99,7 +99,7 @@ func main() {
 
 	httpServer := httpserver.New(
 		httpserver.WithHTTPAddr(cfg.HTTPServer.Hostname, cfg.HTTPServer.Port),
-		httpserver.WithDefaultTracer(serviceName),
+		httpserver.WithTelemetryEnabled(serviceName),
 	)
 	defer httpServer.Shutdown(ctx)
 

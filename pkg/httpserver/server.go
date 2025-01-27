@@ -19,7 +19,7 @@ import (
 
 type Option func(*HTTPServer)
 
-func WithDefaultTracer(appName string) Option {
+func WithTelemetryEnabled(appName string) Option {
 	return func(h *HTTPServer) {
 		h.ginEngine.Use(otelgin.Middleware(appName))
 		l.Logger.Info().Msg("Enabled tracing and metrics for gin gonic")
