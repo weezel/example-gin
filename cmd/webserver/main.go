@@ -20,7 +20,7 @@ import (
 	l "weezel/example-gin/pkg/logger"
 )
 
-var serviceName = cmp.Or(os.Getenv("SERVICE_NAME"), "example-gin")
+var serviceName = cmp.Or(os.Getenv("APP_NAME"), "example-gin")
 
 // These will be filled in the build time by -X flag
 var (
@@ -128,5 +128,5 @@ func main() {
 
 	httpServer.Shutdown(ctx)
 
-	l.Logger.Info().Msgf("Service %s exiting", os.Getenv("APP_NAME"))
+	l.Logger.Info().Msgf("Service %s exiting", serviceName)
 }
