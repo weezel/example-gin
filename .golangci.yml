@@ -60,18 +60,19 @@ linters:
     - lll
     - mirror
     - nestif
+    - nilnesserr
     - nolintlint
     - nosprintfhostport
     - reassign
     - revive
     - sqlclosecheck
     - staticcheck # default
-    - tenv
     - tparallel
     - typecheck # default
     - unconvert
     - unused # default
     - usestdlibvars
+    - usetesting
     - whitespace
     - wrapcheck
     - zerologlint
