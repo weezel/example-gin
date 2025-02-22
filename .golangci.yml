@@ -65,6 +65,7 @@ linters:
     - nosprintfhostport
     - reassign
     - revive
+    - recvcheck
     - sqlclosecheck
     - staticcheck # default
     - tparallel
