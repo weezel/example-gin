@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"sync"
 	"testing"
 
@@ -51,11 +50,11 @@ func TestConfig_Parse(t *testing.T) {
 					},
 				},
 				setEnvVars: func() {
-					os.Setenv("DB_HOST", "localhost")
-					os.Setenv("DB_PORT", "1234")
-					os.Setenv("DB_NAME", "")
-					os.Setenv("DB_USERNAME", "")
-					os.Setenv("DB_PASSWORD", "yadda")
+					t.Setenv("DB_HOST", "localhost")
+					t.Setenv("DB_PORT", "1234")
+					t.Setenv("DB_NAME", "")
+					t.Setenv("DB_USERNAME", "")
+					t.Setenv("DB_PASSWORD", "yadda")
 				},
 			},
 
