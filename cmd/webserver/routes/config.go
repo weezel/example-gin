@@ -3,7 +3,7 @@ package routes
 import (
 	"weezel/example-gin/cmd/webserver/routes/user"
 	"weezel/example-gin/pkg/generated/sqlc"
-	"weezel/example-gin/pkg/httpserver"
+	httpserver "weezel/example-gin/pkg/http/server"
 )
 
 // Add routes to our web server

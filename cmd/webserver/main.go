@@ -13,7 +13,7 @@ import (
 	"weezel/example-gin/cmd/webserver/routes"
 	"weezel/example-gin/pkg/config"
 	"weezel/example-gin/pkg/generated/sqlc"
-	"weezel/example-gin/pkg/httpserver"
+	httpserver "weezel/example-gin/pkg/http/server"
 	"weezel/example-gin/pkg/postgres"
 	"weezel/example-gin/pkg/tracer"
 
