@@ -1,6 +1,7 @@
 package ginmiddleware
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -54,9 +55,6 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 			BodySize:     c.Writer.Size(),
 			Keys:         map[string]any{}, //nolint:govet // AFAIK this is actually used
 		}
-		if param.Latency > time.Minute {
-			param.Latency = param.Latency.Truncate(time.Second)
-		}
 
 		if c.Request.URL.RawQuery != "" {
 			param.Path = c.Request.URL.Path + "?" + c.Request.URL.RawQuery
@@ -73,13 +71,16 @@ func StructuredLogger(logger *zerolog.Logger) gin.HandlerFunc {
 			logEvent = logger.Info() //nolint:zerologlint // Intentionally like this
 		}
 
+		roundedLatency := param.Latency.Round(time.Microsecond)
 		logEvent.Str("uniq_id", l.UniqID()).
 			Str("client_ip", param.ClientIP).
 			Str("method", param.Method).
 			Int("status_code", param.StatusCode).
 			Int("body_size", param.BodySize).
 			Str("path", param.Path).
-			Str("latency", param.Latency.String()).
+			Str("latency_ms", fmt.Sprintf("%.2f",
+				float64(roundedLatency)/float64(time.Millisecond)),
+			).
 			Msg(param.ErrorMessage)
 	}
 }
