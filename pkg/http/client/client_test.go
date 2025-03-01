@@ -91,40 +91,47 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 			want:           &http.Response{StatusCode: http.StatusInternalServerError},
 			wantErrMsg:     "",
 		},
-		// {
-		// 	name: "Illegal base delay",
-		// 	fields: fields{
-		// 		retryConfig: RetryConfig{
-		// 			MaxRetries:   2,
-		// 			MaxBaseDelay: 0,
-		// 			MaxDelay:     time.Second,
-		// 		},
-		// 	},
-		// 	args: args{
-		// 		req: func() (func(), *http.Request) {
-		// 			ts := httptest.NewServer(
-		// 				http.HandlerFunc(
-		// 					func(w http.ResponseWriter, r *http.Request) {
-		// 						w.WriteHeader(http.StatusInternalServerError)
-		// 						fmt.Fprintf(w, "please retry")
-		// 						return
-		// 					}))
+		{
+			name: "Succeed on the third try",
+			fields: fields{
+				retryConfig: RetryConfig{
+					MaxRetries:   3,
+					MaxBaseDelay: time.Nanosecond,
+					MaxDelay:     time.Millisecond,
+				},
+			},
+			args: args{
+				req: func(visitCounter *atomic.Uint32) (func(), *http.Request) {
+					ts := httptest.NewServer(
+						http.HandlerFunc(
+							func(w http.ResponseWriter, _ *http.Request) {
+								visitCounter.Add(1)
 
-		// 			req, err := http.NewRequest(http.MethodGet, ts.URL, nil)
-		// 			if err != nil {
-		// 				t.Errorf("Failed to create request: %v", err)
-		// 			}
+								if visitCounter.Load() == 3 {
+									w.WriteHeader(http.StatusOK)
+									fmt.Fprintf(w, "OK")
+									return
+								}
 
-		// 			return ts.Close, req
-		// 		},
-		// 	},
-		// 	expectedVisits: 0,
-		// 	want:           &http.Response{StatusCode: 500},
-		// 	wantErrMsg:     "should panic",
-		// },
+								w.WriteHeader(http.StatusInternalServerError)
+								fmt.Fprintf(w, "Please retry")
+							}))
+
+					req, err := http.NewRequest(http.MethodGet, ts.URL, nil)
+					if err != nil {
+						t.Errorf("Failed to create request: %v", err)
+					}
+
+					return ts.Close, req
+				},
+			},
+			expectedVisits: 3,
+			want:           &http.Response{StatusCode: http.StatusOK},
+			wantErrMsg:     "",
+		},
 	}
 
-	//nolint:copylocks // Loop variable is reference by value in recent Go versions
+	//nolint // Loop variable is reference by value in recent Go versions
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set env var DEBUG to "true" to see retry attemps
