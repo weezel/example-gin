@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"math/bits"
 	"math/rand/v2"
 	"net"
 	"net/http"
@@ -47,7 +48,8 @@ type retryTransport struct {
 func (r *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	var err error
 	var resp *http.Response
-	for attempt := 1; attempt <= r.config.MaxRetries; attempt++ {
+	//nolint:gosec // Integer is converted to uint so it fits
+	for attempt := uint(1); attempt <= uint(r.config.MaxRetries); attempt++ {
 		// Avoid side effects, such as body being consumed in the previous attempt,
 		// header mutation and context propagation issues by cloning the context
 		newReq := req.Clone(req.Context())
@@ -83,8 +85,11 @@ func (r *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return nil, fmt.Errorf("round trip: %w", err)
 }
 
-func expBackoffWithJitter(attempt int, base, maxDuration time.Duration) time.Duration {
-	expBackoff := base * (1 << attempt)
+const maxShift = uint(bits.UintSize - 2)
+
+func expBackoffWithJitter(attempt uint, base, maxDuration time.Duration) time.Duration {
+	safeAttempt := min(attempt, maxShift)
+	expBackoff := min(base * time.Duration(1<<safeAttempt))
 	jitter := time.Duration(rand.Int64N(int64(expBackoff / 2))) //nolint:gosec // math/rand/v2 is okay
 	delay := min(expBackoff+jitter, maxDuration)
 	l.Logger.Debug().Msgf("Waiting for %s", delay)
