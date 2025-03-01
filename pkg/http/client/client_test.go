@@ -4,52 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
 
-// visitCounter counts how many HTTP endpoint visits are performed
-type visitCounter struct {
-	counter map[string]uint32
-	lock    sync.RWMutex
-}
-
-func (v *visitCounter) add(serviceName string) {
-	v.lock.Lock()
-	defer v.lock.Unlock()
-
-	if _, found := v.counter[serviceName]; !found {
-		v.counter[serviceName] = 1
-	} else {
-		v.counter[serviceName]++
-	}
-}
-
-func (v *visitCounter) get(serviceName string) uint32 {
-	v.lock.RLock()
-	defer v.lock.RUnlock()
-
-	if _, found := v.counter[serviceName]; !found {
-		return 0
-	}
-
-	return v.counter[serviceName]
-}
-
 func TestDefaultHTTPClient_Do(t *testing.T) {
 	t.Helper()
-
-	visits := visitCounter{
-		counter: map[string]uint32{},
-		lock:    sync.RWMutex{},
-	}
 
 	type fields struct {
 		retryConfig RetryConfig
 	}
 	type args struct {
-		req func() (func(), *http.Request)
+		req func(visitCounter *atomic.Uint32) (func(), *http.Request)
 	}
 	tests := []struct { //nolint:govet // Alignment doesn't matter in tests
 		name           string
@@ -57,6 +24,7 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 		args           args
 		want           *http.Response
 		expectedVisits uint32
+		visitCounter   atomic.Uint32
 		wantErrMsg     string
 	}{
 		{
@@ -69,16 +37,11 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 				},
 			},
 			args: args{
-				req: func() (func(), *http.Request) {
+				req: func(visitCounter *atomic.Uint32) (func(), *http.Request) {
 					ts := httptest.NewServer(
 						http.HandlerFunc(
 							func(w http.ResponseWriter, _ *http.Request) {
-								// XXX Keep in sync with the test name!
-								// Cannot reference to `name` field as it's initialized
-								// at the same time as this. And don't want to
-								// do some hacky slices, map or any other container
-								// related solutions here.
-								visits.add("Succesful GET call")
+								visitCounter.Add(1)
 
 								w.WriteHeader(http.StatusOK)
 								fmt.Fprintf(w, "Work's immediately")
@@ -106,16 +69,11 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 				},
 			},
 			args: args{
-				req: func() (func(), *http.Request) {
+				req: func(visitCounter *atomic.Uint32) (func(), *http.Request) {
 					ts := httptest.NewServer(
 						http.HandlerFunc(
 							func(w http.ResponseWriter, _ *http.Request) {
-								// XXX Keep in sync with the test name!
-								// Cannot reference to `name` field as it's initialized
-								// at the same time as this. And don't want to
-								// do some hacky slices, map or any other container
-								// related solutions here.
-								visits.add("Retry exactly two times")
+								visitCounter.Add(1)
 
 								w.WriteHeader(http.StatusInternalServerError)
 								fmt.Fprintf(w, "Please retry")
@@ -165,6 +123,8 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 		// 	wantErrMsg:     "should panic",
 		// },
 	}
+
+	//nolint:copylocks // Loop variable is reference by value in recent Go versions
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set env var DEBUG to "true" to see retry attemps
@@ -180,7 +140,7 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 
 			cli := NewDefaultClient(WithRetryConfig(tt.fields.retryConfig))
 
-			closeTestServer, req := tt.args.req()
+			closeTestServer, req := tt.args.req(&tt.visitCounter)
 			t.Cleanup(func() {
 				closeTestServer()
 			})
@@ -195,9 +155,9 @@ func TestDefaultHTTPClient_Do(t *testing.T) {
 				}
 			})
 
-			if visits.get(tt.name) != tt.expectedVisits {
+			if tt.visitCounter.Load() != tt.expectedVisits {
 				t.Errorf("Expected visits to HTTP endpoint, got = %d, expected = %d",
-					visits.get(tt.name), tt.expectedVisits,
+					tt.visitCounter.Load(), tt.expectedVisits,
 				)
 			}
 		})
