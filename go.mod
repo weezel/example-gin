@@ -1,6 +1,6 @@
 module weezel/example-gin
 
-go 1.23.1
+go 1.24.0
 
 require (
 	github.com/exaring/otelpgx v0.8.0
