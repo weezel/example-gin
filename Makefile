@@ -106,7 +106,8 @@ test-coverage:
 	go tool cover -func=coverage.out
 
 test-unit:
-	go test -short -failfast -race ./...
+	go tool gotest.tools/gotestsum --junitfile=junit.xml -- \
+		-short -failfast -race -covermode=atomic ./...
 
 # This runs all tests, including integration tests
 test-integration: start-db
