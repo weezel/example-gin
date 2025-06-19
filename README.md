@@ -45,6 +45,7 @@ Example screenshot of OTEL tracing captured and shown in Jeager UI:
 * Database retry with exponential backoff and connection pooling.
 * Gin middlewares for logging and database.
 * Enable OpenTelemetry tracing with Gin Gonic integration by default.
+* Live performance statistics and profiling via separate web service (pprof HTTP server)
 * No logging for certain routes/paths (currently /health and /metrics).
 
 ## Usage
