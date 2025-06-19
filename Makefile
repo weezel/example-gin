@@ -47,7 +47,9 @@ install-dependencies:
 lint:
 	-rm -rf cmd/dbmigrate/schemas
 	cp -R sql/schemas cmd/dbmigrate/
-	go tool github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
+	go tool -modfile=golangci-lint.mod \
+		github.com/golangci/golangci-lint/v2/cmd/golangci-lint \
+		run ./...
 
 vulncheck:
 	@govulncheck ./...
