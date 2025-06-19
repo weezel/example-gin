@@ -42,7 +42,9 @@ clean:
 	rm -rf dist/
 
 install-dependencies:
-	@go get -d -v ./...
+	@go get -v ./...
+	@go get -tool -modfile=golangci-lint.mod \
+		github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
 
 lint:
 	-rm -rf cmd/dbmigrate/schemas
