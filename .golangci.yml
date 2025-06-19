@@ -1,62 +1,29 @@
+version: "2"
 run:
-  timeout: 3m
-  go: "" # empty -> will be read from go.mod file instead
-  # Also lint tests
+  concurrency: 2
+  go: ""
   tests: true
   allow-parallel-runners: false
-  concurrency: 2
-linters-settings:
-  gocritic:
-    disabled-checks:
-      - ifElseChain
-      - singleCaseSwitch
-  govet:
-    enable-all: true
-  gofumpt:
-    module-path: "weezel/example-gin"
-  lll:
-    # Max line length, lines longer will be reported.
-    # '\t' is counted as 1 character by default, and
-    # can be changed with the tab-width option.
-    # Default: 120.
-    line-length: 120
-    # Tab width in spaces.
-    # Default: 1
-    tab-width: 8
-  nestif:
-    min-complexity: 6
-  gosimple:
-    checks: ["all"]
-  depguard:
-    rules:
-      main:
-        files:
-          - "**/*.go"
-        deny:
-          - pkg: "github.com/stretchr/testify"
-            desc: "Use stdlib for testing purposes"
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - contextcheck
     - depguard
     - dupl
     - durationcheck
-    - errcheck # default
+    - errcheck
     - errname
     - errorlint
     - exhaustive
+    - forcetypeassert
     - gochecknoinits
     - goconst
     - gocritic
-    - gofmt
-    - gofumpt
-    - goimports
     - gosec
-    - gosimple # default
-    - govet # default
-    - ineffassign # default
+    - govet
+    - iface
+    - ineffassign
     - lll
     - mirror
     - nestif
@@ -64,31 +31,62 @@ linters:
     - nolintlint
     - nosprintfhostport
     - reassign
-    - revive
     - recvcheck
+    - revive
     - sqlclosecheck
-    - staticcheck # default
+    - staticcheck
     - tparallel
-    - typecheck # default
     - unconvert
-    - unused # default
+    - unused
     - usestdlibvars
     - usetesting
     - whitespace
     - wrapcheck
     - zerologlint
-# issues:
-output:
-  # Sort results by: filepath, line and column.
-  sort-results: true
-
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - '**/*.go'
+          deny:
+            - pkg: github.com/stretchr/testify
+              desc: Use stdlib for testing purposes
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+        - singleCaseSwitch
+    govet:
+      enable-all: true
+    lll:
+      line-length: 120
+      tab-width: 8
+    nestif:
+      min-complexity: 6
+    staticcheck:
+      checks:
+        - all
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - pkg/generated
 issues:
-  # Show all the results, don't hide anything
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-dirs:
-    # Directory has generated code
-    - pkg/generated
-  # When enabled these are skipped:
-  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  exclude-dirs-use-default: false
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      module-path: weezel/example-gin
+  exclusions:
+    generated: lax
+    paths:
+      - pkg/generated
