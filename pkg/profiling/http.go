@@ -27,6 +27,7 @@ func NewPprofServer() *PprofServer {
 	listenAddress := net.JoinHostPort(hostname, port)
 	return &PprofServer{
 		listenAddr: listenAddress,
+		once:       &sync.Once{},
 		server: &http.Server{
 			Addr:              listenAddress,
 			Handler:           http.DefaultServeMux,
