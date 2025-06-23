@@ -1,6 +1,6 @@
 version: "2"
 run:
-  concurrency: 2
+  relative-path-mode: gomod
   go: ""
   tests: true
   allow-parallel-runners: false
