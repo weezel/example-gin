@@ -27,6 +27,7 @@ func NewPprofServer() *PprofServer {
 	listenAddress := net.JoinHostPort(hostname, port)
 	return &PprofServer{
 		listenAddr: listenAddress,
+		once:       &sync.Once{},
 		server: &http.Server{
 			Addr:              listenAddress,
 			Handler:           http.DefaultServeMux,
@@ -45,7 +46,7 @@ func (p *PprofServer) Start() {
 	}()
 }
 
-func (p *PprofServer) Stop(ctx context.Context) {
+func (p *PprofServer) Shutdown(ctx context.Context) {
 	p.once.Do(func() {
 		cCtx, cancel := context.WithTimeoutCause(
 			ctx,

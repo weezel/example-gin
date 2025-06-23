@@ -102,8 +102,8 @@ func main() {
 	recvSignal := <-sig
 	l.Logger.Info().Str("received_signal", recvSignal.String()).Msg("Performing a graceful shutdown")
 
+	pprofServer.Shutdown(ctx)
 	httpServer.Shutdown(ctx)
-	pprofServer.Stop(ctx)
 
 	l.Logger.Info().Msgf("Service %s exiting", serviceName)
 }

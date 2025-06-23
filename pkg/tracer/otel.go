@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	l "weezel/example-gin/pkg/logger"
 
@@ -59,6 +60,7 @@ func NewOtelTracerMetrics(
 		serviceName: serviceName,
 		res:         res,
 		modes:       modes,
+		closeOnce:   &sync.Once{},
 	}
 
 	otelTracerMetrics.connection, err = grpc.NewClient(
@@ -98,14 +100,19 @@ func (o *OtelTracerMetrics) Close(ctx context.Context) {
 		var connErr error
 		var tracerErr error
 		var metricsErr error
-		if o.connection != nil {
-			connErr = o.connection.Close()
-		}
+
+		timeout := 4 * time.Second
+		cCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
 		if o.tracer != nil {
-			tracerErr = o.tracer.Shutdown(ctx)
+			tracerErr = o.tracer.Shutdown(cCtx)
 		}
 		if o.metrics != nil {
-			metricsErr = o.metrics.Shutdown(ctx)
+			metricsErr = o.metrics.Shutdown(cCtx)
+		}
+		if o.connection != nil {
+			connErr = o.connection.Close()
 		}
 		errs := errors.Join(connErr, tracerErr, metricsErr)
 		if errs != nil {
