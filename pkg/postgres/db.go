@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
 	"net/url"
 	"strings"
 	"time"
@@ -58,12 +59,10 @@ func New(cfg config.Postgres, appName string, opts ...Option) *Controller {
 		l.Logger.Panic().Err(err).Msg("Unsupported SSL mode given")
 	}
 
-	//nolint:nosprintfhostport // False positive, this isn't a regular hostname:port syntax here
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s&application_name=%s",
 		cfg.Username,
 		url.QueryEscape(cfg.Password),
-		cfg.Hostname,
-		cfg.Port,
+		net.JoinHostPort(cfg.Hostname, cfg.Port),
 		cfg.DBName,
 		cfg.TLS,
 		appName,
@@ -160,12 +159,10 @@ func (c *Controller) Connect(ctx context.Context) error {
 
 // NewMigrationConnection opens a new connection for database migrations
 func NewMigrationConnection(cfg config.Postgres) (*sql.DB, error) {
-	//nolint:nosprintfhostport // False positive, cannot use net.JoinHostPort() here
-	psqlConfig := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&application_name=%s",
+	psqlConfig := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s&application_name=%s",
 		cfg.Username,
 		url.QueryEscape(cfg.Password),
-		cfg.Hostname,
-		cfg.Port,
+		net.JoinHostPort(cfg.Hostname, cfg.Port),
 		cfg.DBName,
 		cfg.TLS,
 		"example-gin migrations",
