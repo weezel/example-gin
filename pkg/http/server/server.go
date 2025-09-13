@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"weezel/example-gin/pkg/ginmiddleware"
@@ -53,7 +53,7 @@ type HTTPServer struct {
 // This is a general implementation that can be used in any server.
 // Leverages options pattern.
 func New(opts ...Option) *HTTPServer {
-	if strings.ToLower(os.Getenv("DEBUG")) != "true" {
+	if isDebug, _ := strconv.ParseBool(os.Getenv("DEBUG")); !isDebug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -21,7 +21,7 @@ var (
 //nolint:gochecknoinits // init() is allowed here to avoid needless calls in each package. Import should be eonugh.
 func init() {
 	var logLevel zerolog.Level
-	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
+	if isDebug, _ := strconv.ParseBool(os.Getenv("DEBUG")); isDebug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		logLevel = zerolog.DebugLevel
 	} else {
