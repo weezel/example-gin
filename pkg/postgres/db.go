@@ -37,15 +37,16 @@ type Contollerer interface {
 	Connect(context.Context) error
 }
 
-type Controller struct {
+type Controller[T any] struct {
 	pool           *pgxpool.Pool
 	config         *pgxpool.Config
+	Queries        T
 	maxConnRetries uint
 }
 
-type Option func(*Controller)
+type Option[T any] func(*Controller[T])
 
-func New(cfg config.Postgres, appName string, opts ...Option) *Controller {
+func New[T any](cfg config.Postgres, appName string, opts ...Option[T]) *Controller[T] {
 	switch cfg.TLS {
 	case string(SSLModeDisable),
 		string(SSLModeAllow),
@@ -72,7 +73,7 @@ func New(cfg config.Postgres, appName string, opts ...Option) *Controller {
 		l.Logger.Panic().Err(err).Msg("Cannot parse database config")
 	}
 
-	ctrl := &Controller{config: dbConfig}
+	ctrl := &Controller[T]{config: dbConfig}
 	ctrl.config.MaxConnLifetime = 10 * time.Minute
 	ctrl.config.MaxConnIdleTime = 10 * time.Second
 	ctrl.config.HealthCheckPeriod = 30 * time.Second
@@ -92,19 +93,19 @@ func New(cfg config.Postgres, appName string, opts ...Option) *Controller {
 	return ctrl
 }
 
-func WithTelemetryEnabled() Option {
-	return func(pc *Controller) {
+func WithTelemetryEnabled[T any]() Option[T] {
+	return func(pc *Controller[T]) {
 		pc.config.ConnConfig.Tracer = otelpgx.NewTracer(otelpgx.WithIncludeQueryParameters())
 	}
 }
 
-func WithPoolMaxConns(poolMaxConns int32) Option {
-	return func(pc *Controller) {
+func WithPoolMaxConns[T any](poolMaxConns int32) Option[T] {
+	return func(pc *Controller[T]) {
 		pc.config.MaxConns = poolMaxConns
 	}
 }
 
-func (c *Controller) Close(ctx context.Context) {
+func (c *Controller[T]) Close(ctx context.Context) {
 	timeout := 5 * time.Second
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -120,11 +121,11 @@ func (c *Controller) Close(ctx context.Context) {
 	c.pool.Close()
 }
 
-func (c *Controller) Pool() *pgxpool.Pool {
+func (c *Controller[T]) Pool() *pgxpool.Pool {
 	return c.pool
 }
 
-func (c *Controller) Connect(ctx context.Context) error {
+func (c *Controller[T]) Connect(ctx context.Context) error {
 	started := time.Now()
 	var retries uint
 	var err error
