@@ -73,7 +73,7 @@ func main() {
 	dbCtrl := postgres.New(
 		cfg.Postgres,
 		serviceName,
-		postgres.WithTelemetryEnabled(),
+		postgres.WithTelemetryEnabled[sqlc.Queries](),
 	)
 	err = dbCtrl.Connect(ctx)
 	if err != nil {
